@@ -45,21 +45,46 @@
 //   console.log(`Server running on http://localhost:${port}`);
 // });
 
-const express = require('express');
-const app = express();
-const cors = require('cors');
-const bodyParser = require('body-parser');
+// const express = require('express');
+// const app = express();
+// const cors = require('cors');
+// const bodyParser = require('body-parser');
 
-// Assuming labReportsRoutes is exported correctly from the routes file
-const labReportsRoutes = require('./routes/labReportsRoutes');
+// // Assuming labReportsRoutes is exported correctly from the routes file
+// const labReportsRoutes = require('./routes/labReportsRoutes');
+
+// const doctorRoutes = require('./routes/doctorRoutes');
+
+// app.use(cors());
+// app.use(bodyParser.json());  // Make sure the request body is parsed as JSON
+
+// // Use the labReportsRoutes with a base path
+// app.use('/api/lab-reports', labReportsRoutes);
+// // Use the doctor routes
+// app.use('/api/doctors', doctorRoutes);
+
+// app.listen(3000, () => {
+//   console.log('Server running on http://localhost:3000');
+// });
+
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const bodyParser = require("body-parser");
+
+// Import routes
+const labReportsRoutes = require("./routes/labReportsRoutes");
+const doctorRoutes = require("./routes/doctorRoutes");
 
 app.use(cors());
-app.use(bodyParser.json());  // Make sure the request body is parsed as JSON
+app.use(bodyParser.json()); // To parse incoming JSON requests
 
 // Use the labReportsRoutes with a base path
-app.use('/api/lab-reports', labReportsRoutes);
+app.use("/api/lab-reports", labReportsRoutes);
+
+// Use the doctor routes
+app.use("/api/doctors", doctorRoutes);
 
 app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+  console.log("Server running on http://localhost:3000");
 });
-

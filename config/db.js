@@ -92,22 +92,98 @@
 
 
 
-const mysql = require('mysql');
+// const mysql = require('mysql');
+
+// const db = mysql.createConnection({
+//   host: 'localhost',
+//   user: 'root',
+//   password: '',
+//   database: 'hospital_db'
+// });
+
+// db.connect((err) => {
+//   if (err) {
+//     console.error('Error connecting to the database:', err);
+//     return;
+//   }
+//   console.log('Connected to the MySQL database');
+// });
+
+// // Export the db connection
+// module.exports = db;
+
+
+
+const mysql = require('mysql2');
 
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'hospital_db'
+  user: 'root',      // Update if necessary
+  password: '',      // Update if necessary
+  database: 'hospital_db' // Ensure you're using the correct database
 });
 
+// Connect to the database
 db.connect((err) => {
   if (err) {
-    console.error('Error connecting to the database:', err);
-    return;
+    console.error('Database connection failed:', err);
+  } else {
+    console.log('Connected to hospital_db database.');
   }
-  console.log('Connected to the MySQL database');
 });
 
-// Export the db connection
+// Ensure the lab_reports table exists
+const ensureLabReportsTable = () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS lab_reports (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      reference_number VARCHAR(255) NOT NULL,
+      patient_name VARCHAR(255) NOT NULL,
+      test_name VARCHAR(255) NOT NULL,
+      report_date DATE NOT NULL,
+      status VARCHAR(50) NOT NULL
+    );
+  `;
+
+  db.query(query, (err) => {
+    if (err) {
+      console.error('Error creating lab_reports table:', err);
+    } else {
+      console.log('Table "lab_reports" ensured.');
+    }
+  });
+};
+
+// Call the function on startup
+ensureLabReportsTable();
+
+// Ensure the doctors table exists
+const ensureDoctorsTable = () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS doctors (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      specialization VARCHAR(255) NOT NULL,
+      workExperience VARCHAR(255),
+      qualifications TEXT,
+      address TEXT,
+      email VARCHAR(255),
+      contactNumber VARCHAR(15),
+      userName VARCHAR(255) NOT NULL,
+      password VARCHAR(255) NOT NULL
+    );
+  `;
+
+  db.query(query, (err) => {
+    if (err) {
+      console.error('Error creating doctors table:', err);
+    } else {
+      console.log('Table "doctors" ensured.');
+    }
+  });
+};
+
+// Call the function on startup to ensure the doctors table exists
+ensureDoctorsTable();
+
 module.exports = db;
