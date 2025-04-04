@@ -122,7 +122,10 @@ const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',      // Update if necessary
   password: '',      // Update if necessary
-  database: 'hospital_db' // Ensure you're using the correct database
+  database: 'hospital_db',
+  // waitForConnections: true,
+  // connectionLimit: 10, // Set a limit on simultaneous connections
+  // queueLimit: 0 // Ensure you're using the correct database
 });
 
 // Connect to the database

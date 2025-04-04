@@ -71,6 +71,8 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const db = require('./config/db'); // Your MySQL DB connection
+const authRoutes = require('./routes/auth'); // The new login route
 
 // Import routes
 const labReportsRoutes = require("./routes/labReportsRoutes");
@@ -84,6 +86,9 @@ app.use("/api/lab-reports", labReportsRoutes);
 
 // Use the doctor routes
 app.use("/api/doctors", doctorRoutes);
+
+// Route to handle login
+app.use('/api/auth', authRoutes);
 
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
