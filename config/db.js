@@ -192,6 +192,31 @@ const ensureDoctorsTable = () => {
 ensureDoctorsTable();
 
 
+const ensureUsersTable = () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      country VARCHAR(100),
+      phone VARCHAR(15),
+      email VARCHAR(100),
+      title VARCHAR(10),
+      first_name VARCHAR(100),
+      last_name VARCHAR(100),
+      id_type VARCHAR(20),
+      nic_or_passport VARCHAR(50),
+      password VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  db.query(query, (err) => {
+    if (err) console.error('❌ Error creating users table:', err);
+    else console.log('Table "users" ensured.');
+  });
+};
+
+ensureUsersTable();
+
 
  
 module.exports = db;
