@@ -116,8 +116,118 @@
 
 
 //workingggggggggggggggggggggggggggggggggggggggggggggg
+// const mysql = require('mysql2');
+
+// const db = mysql.createConnection({
+//   host: 'localhost',
+//   user: 'root',      // Update if necessary
+//   password: '',      // Update if necessary
+//   database: 'hospital_db',
+//   // waitForConnections: true,
+//   // connectionLimit: 10, // Set a limit on simultaneous connections
+//   // queueLimit: 0 // Ensure you're using the correct database
+// });
+
+// // Connect to the database
+// db.connect((err) => {
+//   if (err) {
+//     console.error('Database connection failed:', err);
+//   } else {
+//     console.log('Connected to hospital_db database.');
+//   }
+// });
+
+// // Ensure the lab_reports table exists
+// const ensureLabReportsTable = () => {
+//   const query = `
+//     CREATE TABLE IF NOT EXISTS lab_reports (
+//       id INT AUTO_INCREMENT PRIMARY KEY,
+//       reference_number VARCHAR(255) NOT NULL,
+//       patient_name VARCHAR(255) NOT NULL,
+//       test_name VARCHAR(255) NOT NULL,
+//       report_date DATE NOT NULL,
+//       status VARCHAR(50) NOT NULL
+//     );
+//   `;
+
+//   db.query(query, (err) => {
+//     if (err) {
+//       console.error('Error creating lab_reports table:', err);
+//     } else {
+//       console.log('Table "lab_reports" ensured.');
+//     }
+//   });
+// };
+
+// // Call the function on startup
+// ensureLabReportsTable();
+
+// // Ensure the doctors table exists
+// const ensureDoctorsTable = () => {
+//   const query = `
+//     CREATE TABLE IF NOT EXISTS doctors (
+//       id INT AUTO_INCREMENT PRIMARY KEY,
+//       name VARCHAR(255) NOT NULL,
+//       specialization VARCHAR(255) NOT NULL,
+//       workExperience VARCHAR(255),
+//       qualifications TEXT,
+//       address TEXT,
+//       email VARCHAR(255),
+//       contactNumber VARCHAR(15),
+//       userName VARCHAR(255) NOT NULL,
+//       password VARCHAR(255) NOT NULL,
+//       photo VARCHAR(255)
+//     );
+//   `;
+
+//   db.query(query, (err) => {
+//     if (err) {
+//       console.error('Error creating doctors table:', err);
+//     } else {
+//       console.log('Table "doctors" ensured.');
+//     }
+//   });
+// };
+
+// // Call the function on startup to ensure the doctors table exists
+// ensureDoctorsTable();
+
+
+// const ensureUsersTable = () => {
+//   const query = `
+//     CREATE TABLE IF NOT EXISTS users (
+//       id INT AUTO_INCREMENT PRIMARY KEY,
+//       country VARCHAR(100),
+//       phone VARCHAR(15),
+//       email VARCHAR(100),
+//       title VARCHAR(10),
+//       first_name VARCHAR(100),
+//       last_name VARCHAR(100),
+//       id_type VARCHAR(20),
+//       nic_or_passport VARCHAR(50),
+//       password VARCHAR(255),
+//       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+//     );
+//   `;
+
+//   db.query(query, (err) => {
+//     if (err) console.error('❌ Error creating users table:', err);
+//     else console.log('Table "users" ensured.');
+//   });
+// };
+
+// ensureUsersTable();
+
+
+ 
+// module.exports = db;
+
+
+
+
 const mysql = require('mysql2');
 
+// Create a database connection
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',      // Update if necessary
@@ -159,10 +269,10 @@ const ensureLabReportsTable = () => {
   });
 };
 
-// Call the function on startup
+// Call the function on startup to ensure the lab_reports table exists
 ensureLabReportsTable();
 
-// Ensure the doctors table exists
+// Ensure the doctors table exists and has the photo column
 const ensureDoctorsTable = () => {
   const query = `
     CREATE TABLE IF NOT EXISTS doctors (
@@ -175,7 +285,8 @@ const ensureDoctorsTable = () => {
       email VARCHAR(255),
       contactNumber VARCHAR(15),
       userName VARCHAR(255) NOT NULL,
-      password VARCHAR(255) NOT NULL
+      password VARCHAR(255) NOT NULL,
+      photo VARCHAR(255)
     );
   `;
 
@@ -191,7 +302,28 @@ const ensureDoctorsTable = () => {
 // Call the function on startup to ensure the doctors table exists
 ensureDoctorsTable();
 
+// Add photo column if missing
+const addPhotoColumnIfNotExists = () => {
+  const checkQuery = `
+    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'doctors' AND COLUMN_NAME = 'photo' AND TABLE_SCHEMA = 'hospital_db';
+  `;
 
+  db.query(checkQuery, (err, results) => {
+    if (err) return console.error('Error checking photo column:', err);
+    if (results.length === 0) {
+      db.query('ALTER TABLE doctors ADD COLUMN photo VARCHAR(255);', (err) => {
+        if (err) console.error('Error adding photo column:', err);
+        else console.log('✅ Column "photo" added to doctors table.');
+      });
+    }
+  });
+};
+
+// Call the function to check and add the photo column if necessary
+addPhotoColumnIfNotExists();
+
+// Ensure the users table exists
 const ensureUsersTable = () => {
   const query = `
     CREATE TABLE IF NOT EXISTS users (
@@ -215,11 +347,11 @@ const ensureUsersTable = () => {
   });
 };
 
+// Call the function to ensure users table exists
 ensureUsersTable();
 
-
- 
 module.exports = db;
+
 
 
 

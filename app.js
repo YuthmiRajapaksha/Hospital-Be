@@ -73,6 +73,8 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const db = require('./config/db'); // Your MySQL DB connection
 const authRoutes = require('./routes/auth'); // The new login route
+const path = require('path');
+
 
 // Import routes
 const labReportsRoutes = require("./routes/labReportsRoutes");
@@ -93,6 +95,8 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api', registerRoutes);
 
+// Serve uploaded images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // YOUR SEARCH ROUTE
