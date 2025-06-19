@@ -320,114 +320,283 @@
 
 
 
+// const express = require("express");
+// const router = express.Router();
+// const db = require("../config/db");
+// const { checkLabReportStatus, addLabReport } = require("../controllers/labReportController");
+
+// // ✅ GET total count of lab reports
+// router.get("/count", (req, res) => {
+//   const query = "SELECT COUNT(*) AS count FROM lab_reports";
+
+//   db.query(query, (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving lab reports count:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     res.status(200).json({ count: results[0].count });
+//   });
+// });
+
+
+// // ✅ GET count of lab reports for today
+// router.get("/count-today", (req, res) => {
+//   const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+//   const query = "SELECT COUNT(*) AS count FROM lab_reports WHERE DATE(report_date) = ?";
+
+//   db.query(query, [today], (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving today's lab report count:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     res.status(200).json({ count: results[0].count });
+//   });
+// });
+
+// // ✅ GET all lab reports
+// router.get("/", (req, res) => {
+//   const query = "SELECT * FROM lab_reports";
+
+//   db.query(query, (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving lab reports:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     res.status(200).json(results);
+//   });
+// });
+
+// // ✅ GET a specific lab report by ID
+// router.get("/:id", (req, res) => {
+//   const { id } = req.params;
+
+//   const query = "SELECT * FROM lab_reports WHERE id = ?";
+
+//   db.query(query, [id], (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving lab report:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).send("Lab report not found");
+//     }
+
+//     res.status(200).json(results[0]);
+//   });
+// });
+
+// // ✅ Check lab report status by reference number
+// router.get("/check/:referenceNumber", checkLabReportStatus);
+
+// // ✅ Add a new lab report
+// router.post("/add", addLabReport);
+
+// // ✅ Update an existing lab report
+// router.put("/update/:id", (req, res) => {
+//   const { id } = req.params;
+//   const { reference_number, patient_name, test_name, report_date, status } = req.body;
+
+//   const query = `
+//     UPDATE lab_reports 
+//     SET reference_number = ?, patient_name = ?, test_name = ?, report_date = ?, status = ? 
+//     WHERE id = ?
+//   `;
+
+//   db.query(query, [reference_number, patient_name, test_name, report_date, status, id], (err, result) => {
+//     if (err) {
+//       console.error("Error updating lab report:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).send("Lab report not found");
+//     }
+
+//     console.log("Data updated in MySQL:", result);
+//     res.status(200).send("Lab report updated successfully");
+//   });
+// });
+
+// // ✅ DELETE a lab report
+// router.delete("/delete/:id", (req, res) => {
+//   const { id } = req.params;
+
+//   const query = "DELETE FROM lab_reports WHERE id = ?";
+
+//   db.query(query, [id], (err, result) => {
+//     if (err) {
+//       console.error("Error deleting lab report:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).send("Lab report not found");
+//     }
+
+//     console.log("Data deleted from MySQL:", result);
+//     res.status(200).send("Lab report deleted successfully");
+//   });
+// });
+
+// module.exports = router;
+
+// const express = require("express");
+// const router = express.Router();
+// const db = require("../config/db");
+// const { checkLabReportStatus, addLabReport } = require("../controllers/labReportController");
+
+// // ✅ GET total count of lab reports
+// router.get("/count", (req, res) => {
+//   const query = "SELECT COUNT(*) AS count FROM lab_reports";
+
+//   db.query(query, (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving lab reports count:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     res.status(200).json({ count: results[0].count });
+//   });
+// });
+
+// // ✅ GET count of lab reports for today
+// router.get("/count-today", (req, res) => {
+//   const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+//   const query = "SELECT COUNT(*) AS count FROM lab_reports WHERE DATE(report_date) = ?";
+
+//   db.query(query, [today], (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving today's lab report count:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     res.status(200).json({ count: results[0].count });
+//   });
+// });
+
+// // ✅ GET all lab reports
+// router.get("/", (req, res) => {
+//   const query = "SELECT * FROM lab_reports";
+
+//   db.query(query, (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving lab reports:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     res.status(200).json(results);
+//   });
+// });
+
+// // ✅ Check lab report status by reference number
+// router.get("/check/:referenceNumber", checkLabReportStatus);
+
+// // ✅ GET a specific lab report by ID (must come **after** other GET routes)
+// router.get("/:id", (req, res) => {
+//   const { id } = req.params;
+
+//   const query = "SELECT * FROM lab_reports WHERE id = ?";
+
+//   db.query(query, [id], (err, results) => {
+//     if (err) {
+//       console.error("Error retrieving lab report:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).send("Lab report not found");
+//     }
+
+//     res.status(200).json(results[0]);
+//   });
+// });
+
+// // ✅ Add a new lab report
+// router.post("/add", addLabReport);
+
+// // ✅ Update an existing lab report
+// router.put("/update/:id", (req, res) => {
+//   const { id } = req.params;
+//   const { reference_number, patient_name, test_name, report_date, status } = req.body;
+
+//   const query = `
+//     UPDATE lab_reports 
+//     SET reference_number = ?, patient_name = ?, test_name = ?, report_date = ?, status = ? 
+//     WHERE id = ?
+//   `;
+
+//   db.query(query, [reference_number, patient_name, test_name, report_date, status, id], (err, result) => {
+//     if (err) {
+//       console.error("Error updating lab report:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).send("Lab report not found");
+//     }
+
+//     console.log("Data updated in MySQL:", result);
+//     res.status(200).send("Lab report updated successfully");
+//   });
+// });
+
+// // ✅ DELETE a lab report
+// router.delete("/delete/:id", (req, res) => {
+//   const { id } = req.params;
+
+//   const query = "DELETE FROM lab_reports WHERE id = ?";
+
+//   db.query(query, [id], (err, result) => {
+//     if (err) {
+//       console.error("Error deleting lab report:", err);
+//       return res.status(500).send("Database error");
+//     }
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).send("Lab report not found");
+//     }
+
+//     console.log("Data deleted from MySQL:", result);
+//     res.status(200).send("Lab report deleted successfully");
+//   });
+// });
+
+// module.exports = router;
+
+
+
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db");
-const { checkLabReportStatus, addLabReport } = require("../controllers/labReportController");
+const {
+  getAllReports,
+  addLabReport,
+  updateLabReport,
+  deleteLabReport,
+  checkLabReportStatus,
+} = require("../controllers/labReportController");
 
-// ✅ GET total count of lab reports
-router.get("/count", (req, res) => {
-  const query = "SELECT COUNT(*) AS count FROM lab_reports";
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error("Error retrieving lab reports count:", err);
-      return res.status(500).send("Database error");
-    }
-
-    res.status(200).json({ count: results[0].count });
-  });
+router.get("/count", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT COUNT(*) AS count FROM lab_reports");
+    const count = rows?.[0]?.count ?? 0;
+    res.status(200).json({ count });
+  } catch (err) {
+    console.error("Error retrieving lab reports count:", err);
+    res.status(500).json({ message: "Database error", error: err });
+  }
 });
 
-// ✅ GET all lab reports
-router.get("/", (req, res) => {
-  const query = "SELECT * FROM lab_reports";
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error("Error retrieving lab reports:", err);
-      return res.status(500).send("Database error");
-    }
-
-    res.status(200).json(results);
-  });
-});
-
-// ✅ GET a specific lab report by ID
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
-
-  const query = "SELECT * FROM lab_reports WHERE id = ?";
-
-  db.query(query, [id], (err, results) => {
-    if (err) {
-      console.error("Error retrieving lab report:", err);
-      return res.status(500).send("Database error");
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send("Lab report not found");
-    }
-
-    res.status(200).json(results[0]);
-  });
-});
-
-// ✅ Check lab report status by reference number
+router.get("/", getAllReports);
+router.post("/add", addLabReport);
+router.put("/update/:id", updateLabReport);
+router.delete("/delete/:id", deleteLabReport);
 router.get("/check/:referenceNumber", checkLabReportStatus);
 
-// ✅ Add a new lab report
-router.post("/add", addLabReport);
-
-// ✅ Update an existing lab report
-router.put("/update/:id", (req, res) => {
-  const { id } = req.params;
-  const { reference_number, patient_name, test_name, report_date, status } = req.body;
-
-  const query = `
-    UPDATE lab_reports 
-    SET reference_number = ?, patient_name = ?, test_name = ?, report_date = ?, status = ? 
-    WHERE id = ?
-  `;
-
-  db.query(query, [reference_number, patient_name, test_name, report_date, status, id], (err, result) => {
-    if (err) {
-      console.error("Error updating lab report:", err);
-      return res.status(500).send("Database error");
-    }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).send("Lab report not found");
-    }
-
-    console.log("Data updated in MySQL:", result);
-    res.status(200).send("Lab report updated successfully");
-  });
-});
-
-// ✅ DELETE a lab report
-router.delete("/delete/:id", (req, res) => {
-  const { id } = req.params;
-
-  const query = "DELETE FROM lab_reports WHERE id = ?";
-
-  db.query(query, [id], (err, result) => {
-    if (err) {
-      console.error("Error deleting lab report:", err);
-      return res.status(500).send("Database error");
-    }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).send("Lab report not found");
-    }
-
-    console.log("Data deleted from MySQL:", result);
-    res.status(200).send("Lab report deleted successfully");
-  });
-});
-
 module.exports = router;
-
 
 
 

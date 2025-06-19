@@ -44,13 +44,22 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Routes
-router.post('/add', upload.single('photo'), doctorController.addDoctor);
-router.post('/add', doctorController.addDoctor);
+// router.post('/add', upload.single('photo'), doctorController.addDoctor);
+// // router.post('/add', doctorController.addDoctor);
 
+// router.get('/', doctorController.getDoctors);
+// router.put('/update/:id', upload.single('photo'), doctorController.updateDoctor);
+// router.get('/:id', doctorController.getDoctorById);
+// router.delete('/delete/:id', doctorController.deleteDoctor);
+// router.post('/add', doctorController.addDoctor);
+
+router.post('/add', upload.single('photo'), doctorController.addDoctor);
 router.get('/', doctorController.getDoctors);
-router.put('/update/:id', upload.single('photo'), doctorController.updateDoctor);
 router.get('/:id', doctorController.getDoctorById);
+router.put('/update/:id', upload.single('photo'), doctorController.updateDoctor);
 router.delete('/delete/:id', doctorController.deleteDoctor);
+
+
 
 module.exports = router;
 
