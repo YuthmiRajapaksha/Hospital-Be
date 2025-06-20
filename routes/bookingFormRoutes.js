@@ -108,14 +108,89 @@
 
 
 // routes/bookingFormRoutes.js
+// const express = require('express');
+// const router = express.Router();
+// const bookingFormController = require('../controllers/bookingFormController');
+
+// router.post('/multiple', bookingFormController.saveMultipleSessions);
+
+// module.exports = router;
+
+// const express = require('express');
+// const router = express.Router();
+// const bookingFormController = require('../controllers/bookingFormController');
+// const db = require('../config/db'); // your mysql2 promise pool
+
+// // Save multiple appointment sessions
+// router.post('/multiple', bookingFormController.saveMultipleSessions);
+
+// // Get appointments for a specific doctor
+// // ✅ Add this route to fetch doctor sessions from bookingForm table
+// router.get('/doctor/:doctorId', bookingFormController.getAppointmentsByDoctor)
+// router.get('/doctor/:doctorId', async (req, res) => {
+//   const { doctorId } = req.params;
+//   try {
+//     const [results] = await db.query(
+//       'SELECT id, hospital, date FROM appointments WHERE doctor_id = ? ORDER BY date ASC',
+//       [doctorId]
+//     );
+//     res.json({ appointments: results });
+//   } catch (err) {
+//     console.error('Error fetching appointments:', err);
+//     res.status(500).json({ message: 'Error fetching appointments' });
+//   }
+// });
+
+// // Update appointment
+// router.put('/:id', async (req, res) => {
+//   const { id } = req.params;
+//   const { hospital, date } = req.body;
+//   try {
+//     await db.query('UPDATE appointments SET hospital = ?, date = ? WHERE id = ?', [
+//       hospital,
+//       date,
+//       id,
+//     ]);
+//     res.json({ message: 'Appointment updated' });
+//   } catch (err) {
+//     console.error('Error updating appointment:', err);
+//     res.status(500).json({ message: 'Error updating appointment' });
+//   }
+// });
+
+// // Delete appointment
+// router.delete('/:id', async (req, res) => {
+//   const { id } = req.params;
+//   try {
+//     await db.query('DELETE FROM appointments WHERE id = ?', [id]);
+//     res.json({ message: 'Appointment deleted' });
+//   } catch (err) {
+//     console.error('Error deleting appointment:', err);
+//     res.status(500).json({ message: 'Error deleting appointment' });
+//   }
+// });
+
+// module.exports = router;
+
+
+// routes/bookingFormRoutes.js
 const express = require('express');
 const router = express.Router();
 const bookingFormController = require('../controllers/bookingFormController');
 
+// Save multiple appointment sessions
 router.post('/multiple', bookingFormController.saveMultipleSessions);
 
-module.exports = router;
+// Get appointments for a specific doctor
+router.get('/doctor/:doctorId', bookingFormController.getAppointmentsByDoctor);
 
+// Update appointment by ID
+router.put('/:id', bookingFormController.updateAppointment);
+
+// Delete appointment by ID
+router.delete('/:id', bookingFormController.deleteAppointment);
+
+module.exports = router;
 
 
 
