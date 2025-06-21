@@ -47,6 +47,7 @@ app.use("/api", createPaymentIntent);
 app.use('/api/bookingForm', bookingFormRoutes); // ✅ Corrected line
 
 app.use("/api/doctors", doctorSearchRoutes);
+app.use("/api/bookingform", doctorSearchRoutes);
 
 
 

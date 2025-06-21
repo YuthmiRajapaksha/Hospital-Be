@@ -40,9 +40,7 @@ async function setupDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         specialization VARCHAR(255) NOT NULL,
-        workExperience VARCHAR(255),
-        qualifications TEXT,
-        address TEXT,
+        
         email VARCHAR(255),
         contactNumber VARCHAR(15),
         userName VARCHAR(255) NOT NULL,
