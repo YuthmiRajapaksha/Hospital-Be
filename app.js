@@ -15,9 +15,11 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const createPaymentIntent = require("./routes/createPaymentIntent");
 const bookingFormRoutes = require("./routes/bookingFormRoutes");
 const doctorSearchRoutes = require("./routes/doctorSearchRoutes");
+const auth = require ("./routes/auth");
 
 app.use(cors());
-app.use(bodyParser.json()); // To parse incoming JSON requests
+app.use(bodyParser.json());
+// app.use(express.json()); // To parse incoming JSON requests
 
 const stripe = require('stripe')('your_secret_key');
 
@@ -31,6 +33,8 @@ app.use("/api/doctors", doctorRoutes);
 
 // Route to handle login
 app.use('/api/auth', authRoutes);
+app.use('/api/login', registerRoutes);
+app.use('/api/register', registerRoutes);
 
 app.use('/api', registerRoutes);
 

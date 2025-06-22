@@ -52,20 +52,20 @@ async function setupDatabase() {
 
     // USERS TABLE
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        country VARCHAR(100),
-        phone VARCHAR(15),
-        email VARCHAR(100),
-        title VARCHAR(10),
-        first_name VARCHAR(100),
-        last_name VARCHAR(100),
-        id_type VARCHAR(20),
-        nic_or_passport VARCHAR(50),
-        password VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+  CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    country VARCHAR(100),
+    phone VARCHAR(15),
+    email VARCHAR(100) NOT NULL UNIQUE,
+    title VARCHAR(10),
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    id_type VARCHAR(20),
+    nic_or_passport VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+`);
     console.log('✅ Table "users" ensured.');
 
     // APPOINTMENTS TABLE
