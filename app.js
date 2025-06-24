@@ -11,11 +11,12 @@ const path = require('path');
 const labReportsRoutes = require("./routes/labReportsRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const registerRoutes = require('./routes/registerRoutes');
-const appointmentRoutes = require('./routes/appointmentRoutes');
+const appointmentsRoutes = require('./routes/appointmentsRoutes');
 const createPaymentIntent = require("./routes/createPaymentIntent");
 const bookingFormRoutes = require("./routes/bookingFormRoutes");
 const doctorSearchRoutes = require("./routes/doctorSearchRoutes");
 const auth = require ("./routes/auth");
+const sessionRoutes = require("./routes/session");
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -38,11 +39,13 @@ app.use('/api/register', registerRoutes);
 
 app.use('/api', registerRoutes);
 
+app.use("/api/sessions", sessionRoutes);
+
 // Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // After other routes
-app.use("/api/appointments", appointmentRoutes);
+app.use("/api/appointments", appointmentsRoutes);
 
 // app.use("/api/create-payment-intent", createPaymentIntent);
 app.use("/api", createPaymentIntent);
@@ -52,6 +55,10 @@ app.use('/api/bookingForm', bookingFormRoutes); // ✅ Corrected line
 
 app.use("/api/doctors", doctorSearchRoutes);
 app.use("/api/bookingform", doctorSearchRoutes);
+
+// app.use("/api/appointments", appointmentsRoutes);
+
+app.use("/api/create-payment-intent", createPaymentIntent);
 
 
 

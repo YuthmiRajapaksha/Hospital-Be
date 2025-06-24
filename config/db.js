@@ -87,6 +87,11 @@ async function setupDatabase() {
       { name: "country", type: "VARCHAR(50) NOT NULL" },
       { name: "nic", type: "VARCHAR(20) NOT NULL" },
       { name: "email", type: "VARCHAR(100) NOT NULL" },
+      { name: "payment_id", type: "VARCHAR(100) DEFAULT NULL" },
+  { name: "hospital", type: "VARCHAR(100) NOT NULL" },
+  { name: "session_date", type: "DATE DEFAULT NULL" },
+  { name: "session_time", type: "TIME NOT NULL" },
+  { name: "doctor_name", type: "VARCHAR(100) NOT NULL" },
     ];
 
     for (const { name, type } of columnsToAdd) {
@@ -102,6 +107,11 @@ async function setupDatabase() {
         console.log(`ℹ️ Column '${name}' already exists in appointments.`);
       }
     }
+//     await pool.query(`
+//   ALTER TABLE appointments ADD COLUMN payment_id VARCHAR(100) DEFAULT NULL;
+// `);
+// console.log(`✅ Added column 'payment_id' to appointments.`);
+
 
     // BOOKING FORM TABLE
     await pool.query(`

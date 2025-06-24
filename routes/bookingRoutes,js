@@ -1,0 +1,64 @@
+// GET /api/appointments/doctor/:id
+// router.get("/appointments/doctor/:id", async (req, res) => {
+//   const doctorId = req.params.id;
+
+//   try {
+//     const [appointments] = await db.query(
+//       "SELECT * FROM bookingform WHERE doctor_id = ? AND session_date >= CURDATE()",
+//       [doctorId]
+//     );
+
+//     if (appointments.length === 0) {
+//       return res.status(404).json({ message: "No upcoming sessions found" });
+//     }
+
+//     res.json(appointments);
+//   } catch (err) {
+//     res.status(500).json({ message: "Error fetching appointments" });
+//   }
+// });
+
+
+const express = require("express");
+const router = express.Router();
+const pool = require("../db");
+
+// Get all appointments by doctorId
+router.get("/:doctorId", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM bookingform WHERE doctor_id = ? ORDER BY session_date ASC, session_time ASC",
+      [req.params.doctorId]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch appointments" });
+  }
+});
+
+// Update appointment session (by id)
+router.put("/:id", async (req, res) => {
+  const { hospital, session_date, session_time } = req.body;
+  try {
+    await pool.query(
+      "UPDATE bookingform SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?",
+      [hospital, session_date, session_time, req.params.id]
+    );
+    res.json({ message: "Appointment updated" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update" });
+  }
+});
+
+// Delete appointment session (by id)
+router.delete("/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM bookingform WHERE id = ?", [req.params.id]);
+    res.json({ message: "Appointment deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete" });
+  }
+});
+
+module.exports = router;
+

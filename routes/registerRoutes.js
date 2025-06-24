@@ -120,9 +120,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db'); // mysql2 promise pool
 const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
-// const JWT_SECRET = 'your_jwt_secret_key_here';
+const JWT_SECRET = 'your_jwt_secret_key_here';
 
 router.post('/register', async (req, res) => {
   const {
@@ -169,31 +169,82 @@ console.log("log")
 });
 
 
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  console.log("this is log",email)
+// router.post('/login', async (req, res) => {
+//   const { email, password } = req.body;
+//   console.log("this is log",email)
 
-  if (!email || !password) {
+//   if (!email || !password) {
+//     return res.status(400).json({ message: "Email and password required" });
+//   }
+
+//   try {
+//     const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+
+//     if (rows.length === 0) {
+//       return res.status(401).json({ message: "Invalid email or password" });
+//     }
+
+//     const user = rows[0];
+
+//     const match = await bcrypt.compare(password, user.password);
+//     if (!match) {
+//       return res.status(401).json({ message: "Invalid email or password" });
+//     }
+
+//     const token = jwt.sign(
+//       { id: user.id, email: user.email },
+//       JWT_SECRET,
+//       { expiresIn: "1h" }
+//     );
+
+//     return res.json({
+//       success: true,
+//       message: "Login successful",
+//       user: {
+//         id: user.id,
+//         email: user.email,
+//         firstName: user.first_name,
+//         lastName: user.last_name,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Login error:", error);
+//     return res.status(500).json({ message: "Server error during login" });
+//   }
+// });
+
+
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
     return res.status(400).json({ message: "Email and password required" });
-  }
 
   try {
     const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
-
-    if (rows.length === 0) {
+    if (rows.length === 0)
       return res.status(401).json({ message: "Invalid email or password" });
-    }
 
     const user = rows[0];
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword)
       return res.status(401).json({ message: "Invalid email or password" });
-    }
 
-    return res.json({
+    // Create JWT
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+      },
+      JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({
       success: true,
-      message: "Login successful",
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -201,10 +252,11 @@ router.post('/login', async (req, res) => {
         lastName: user.last_name,
       },
     });
-  } catch (error) {
-    console.error("Login error:", error);
-    return res.status(500).json({ message: "Server error during login" });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
+
 
 module.exports = router;

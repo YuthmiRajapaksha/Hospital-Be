@@ -5,25 +5,492 @@
 
 // router.get("/appointments/user/:name", getAppointmentsByPatient);
 
+// // module.exports = router;
+// const express = require("express");
+// const router = express.Router();
+// const db = require("../config/db");
+
+// // Get appointments for a specific doctor
+// router.get("/doctor/:doctorId", async (req, res) => {
+//   const { doctorId } = req.params;
+
+//   try {
+//     const [rows] = await db.query(
+//       "SELECT * FROM appointments WHERE doctor_id = ? ORDER BY date DESC",
+//       [doctorId]
+//     );
+//     res.json(rows);
+//   } catch (err) {
+//     console.error("Error fetching doctor appointments:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
+
 // module.exports = router;
+
+
+// const express = require("express");
+// const router = express.Router();
+// const pool = require("../db");
+
+// // POST /api/appointments
+// router.post("/", async (req, res) => {
+//   try {
+//     const {
+//       doctorId,
+//       session_date,
+//       session_time,
+//       patientName,
+//       phone,
+//       country,
+//       nic,
+//       email,
+//       paymentId,
+//     } = req.body;
+
+//     // Combine date + time into one DATETIME field
+//     const dateTime = `${session_date} ${session_time}`;
+
+//     const [result] = await pool.query(
+//       `INSERT INTO appointments 
+//        (doctor_id, date, patient_name, phone, country, nic, email) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+//       [doctorId, dateTime, patientName, phone, country, nic, email]
+//     );
+
+//     res.status(200).json({ message: "Booking saved", appointmentId: result.insertId });
+//   } catch (err) {
+//     console.error("❌ Error saving appointment:", err);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+
+// router.get("/appointments/count/:doctorId", async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(
+//       "SELECT COUNT(*) AS count FROM appointments WHERE doctor_id = ?",
+//       [req.params.doctorId]
+//     );
+//     res.json({ count: rows[0].count });
+//   } catch (err) {
+//     res.status(500).json({ error: "Database error" });
+//   }
+// });
+
+
+// router.post("/appointments", async (req, res) => {
+//   const { doctorId, date, patientName, phone, country, nic, email, paymentId } = req.body;
+//   try {
+//     await pool.query(
+//       "INSERT INTO appointments (doctor_id, date, patient_name, phone, country, nic, email) VALUES (?, ?, ?, ?, ?, ?, ?)",
+//       [doctorId, date, patientName, phone, country, nic, email]
+//     );
+//     res.status(201).json({ message: "Appointment saved" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Insert failed" });
+//   }
+// });
+
+
+
+// module.exports = router;
+
+
+
+// const express = require("express");
+// const router = express.Router();
+// const pool = require("../db");
+
+// // POST /api/appointments — Create a new appointment
+// router.post("/", async (req, res) => {
+//   try {
+//     const {
+//       doctorId,
+//       date,
+//       time,
+//       patientName,
+//       phone,
+//       country,
+//       nic,
+//       email,
+//       paymentId // Optional, included for tracking if needed
+//     } = req.body;
+
+//     // Combine date and time
+//     const dateTime = `${date} ${time}`;
+
+//     const [result] = await pool.query(
+//       `INSERT INTO appointments 
+//         (doctor_id, date, patient_name, phone, country, nic, email, payment_id) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [doctorId, dateTime, patientName, phone, country, nic, email, paymentId || null]
+//     );
+
+//     res.status(201).json({ message: "Appointment saved", appointmentId: result.insertId });
+//   } catch (err) {
+//     console.error("❌ Error saving appointment:", err);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+// // GET /api/appointments/count/:doctorId — Count active appointments
+// router.get("/count/:doctorId", async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(
+//       "SELECT COUNT(*) AS count FROM appointments WHERE doctor_id = ?",
+//       [req.params.doctorId]
+//     );
+//     res.json({ count: rows[0].count });
+//   } catch (err) {
+//     console.error("❌ Error fetching count:", err);
+//     res.status(500).json({ error: "Database error" });
+//   }
+// });
+
+// module.exports = router;
+
+
+// backend/routes/appointments.js
+
+// const express = require("express");
+// const router = express.Router();
+// const pool = require("../config/db");
+
+// // POST /api/appointments — Create a new appointment
+// router.post("/", async (req, res) => {
+//   try {
+//     const {
+//       doctorId,
+//       date, // full date + time from frontend
+//       patientName,
+//       phone,
+//       country,
+//       nic,
+//       email,
+//       paymentId
+//     } = req.body;
+
+//      const dateTime = date;
+
+//     const [result] = await pool.query(
+//       `INSERT INTO appointments 
+//         (doctor_id, date, patient_name, phone, country, nic, email, payment_id) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [doctorId, date, patientName, phone, country, nic, email, paymentId || null]
+//     );
+
+//     res.status(201).json({ message: "Appointment saved", appointmentId: result.insertId });
+//   } catch (err) {
+//     console.error("❌ Error saving appointment:", err); // SHOW FULL ERROR
+//     res.status(500).json({ error: "Internal Server Error", details: err.message });
+//   }
+// });
+
+// // GET /api/appointments/count/:doctorId — Count active appointments for a doctor
+// router.get("/count/:doctorId", async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(
+//       "SELECT COUNT(*) AS count FROM appointments WHERE doctor_id = ?",
+//       [req.params.doctorId]
+//     );
+//     res.json({ count: rows[0].count });
+//   } catch (err) {
+//     console.error("❌ Error fetching count:", err);
+//     res.status(500).json({ error: "Database error" });
+//   }
+// });
+
+// module.exports = router;
+
+
+// routes/appointmentsRoutes.js
+
+
+// router.post("/", async (req, res) => {
+//   const {
+//     doctorId,
+//     doctorName,
+//     hospital,
+//     sessionDate,
+//     sessionTime,
+//     patientName,
+//     phone,
+//     country,
+//     nic,
+//     email,
+//     date,
+//     paymentId
+//   } = req.body;
+
+//   try {
+//     // 1. Check how many existing appointments for this session
+//     const [countResult] = await pool.execute(
+//       `SELECT COUNT(*) AS count FROM appointments 
+//        WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
+//       [doctorId, hospital, sessionDate, sessionTime]
+//     );
+
+//     const currentCount = countResult[0].count;
+
+//     // 2. If already 5 or more, reject
+//     if (currentCount >= 5) {
+//       return res.status(400).json({ error: "This session is fully booked." });
+//     }
+
+//     // 3. Otherwise, insert appointment
+//     await pool.execute(
+//       `INSERT INTO appointments 
+//         (doctor_id, doctor_name, hospital, session_date, session_time,
+//          patient_name, phone, country, nic, email, booked_at, payment_id) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         doctorId,
+//         doctorName,
+//         hospital,
+//         sessionDate,
+//         sessionTime,
+//         patientName,
+//         phone,
+//         country,
+//         nic,
+//         email,
+//         date,
+//         paymentId
+//       ]
+//     );
+
+//     res.status(200).json({ message: "Appointment booked successfully." });
+
+//   } catch (err) {
+//     console.error("Appointment Booking Error:", err);
+//     res.status(500).json({ error: "Server error. Try again later." });
+//   }
+// });
+
+
+
+// router.post("/", async (req, res) => {
+//   const {
+//     doctorId,
+//     doctorName,
+//     hospital,
+//     sessionDate,
+//     sessionTime,
+//     patientName,
+//     phone,
+//     country,
+//     nic,
+//     email,
+//     date,       // assume format 'YYYY-MM-DD HH:mm:ss'
+//     paymentId
+//   } = req.body;
+
+//   try {
+//     // Check current count
+//     const [countResult] = await pool.execute(
+//       `SELECT COUNT(*) AS count FROM appointments 
+//        WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
+//       [doctorId, hospital, sessionDate, sessionTime]
+//     );
+
+//     const currentCount = countResult[0].count;
+
+//     if (currentCount >= 5) {
+//       return res.status(400).json({ error: "This session is fully booked." });
+//     }
+
+//     // Insert appointment
+//     await pool.execute(
+//       `INSERT INTO appointments 
+//         (doctor_id, doctor_name, hospital, session_date, session_time,
+//          patient_name, phone, country, nic, email, booked_at, payment_id) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         doctorId,
+//         doctorName,
+//         hospital,
+//         sessionDate,
+//         sessionTime,
+//         patientName,
+//         phone,
+//         country,
+//         nic,
+//         email,
+//         date,
+//         paymentId
+//       ]
+//     );
+
+//     return res.status(201).json({ message: "Appointment booked successfully." });
+
+//   } catch (err) {
+//     console.error("Appointment Booking Error:", err);
+//     return res.status(500).json({ error: "Server error. Try again later." });
+//   }
+// });
+
+
+// module.exports = router;
+
+
+
+// backend/routes/appointments.js
+// const express = require("express");
+// const router = express.Router();
+// const pool = require("../db/db");
+
+// router.post("/", async (req, res) => {
+//   const {
+//     doctorId,
+//     doctorName,
+//     hospital,
+//     sessionDate,
+//     sessionTime,
+//     patientName,
+//     phone,
+//     country,
+//     nic,
+//     email,
+//     date,
+//     paymentId
+//   } = req.body;
+
+//   try {
+//     const [countResult] = await pool.execute(
+//       `SELECT COUNT(*) AS count FROM appointments 
+//        WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
+//       [doctorId, hospital, sessionDate, sessionTime]
+//     );
+
+//     const currentCount = countResult[0].count;
+
+//     if (currentCount >= 5) {
+//       return res.status(400).json({ error: "This session is fully booked." });
+//     }
+
+//     const formattedSessionDate = new Date(sessionDate).toISOString().split("T")[0];
+// const formattedSessionTime = sessionTime?.padEnd(8, ":00");
+
+//     await pool.execute(
+//       `INSERT INTO appointments 
+//         (doctor_id, doctor_name, hospital, session_date, session_time,
+//          patient_name, phone, country, nic, email, date, payment_id) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         doctorId,
+//         doctorName,
+//         hospital,
+//         sessionDate,
+//         sessionTime,
+//         patientName,
+//         phone,
+//         country,
+//         nic,
+//         email,
+//         date,
+//         paymentId
+//       ]
+//     );
+
+//     res.status(200).json({ message: "Appointment booked successfully." });
+
+//   } catch (err) {
+//     console.error("Appointment Booking Error:", err);
+//     res.status(500).json({ error: "Server error. Try again later." });
+//   }
+// });
+
+
+
+// const express = require("express");
+// const pool = require("../config/db");
+// const router = express.Router();
+// const { createAppointment, countAppointments } = require("../controllers/appointmentsController");
+
+
+
+// router.post("/", createAppointment);
+// router.get("/count/:doctorId", countAppointments);
+
+// router.post("/", async (req, res) => {
+//   const {
+//     doctorId,
+//     doctorName,
+//     hospital,
+//     sessionDate,
+//     sessionTime,
+//     patientName,
+//     phone,
+//     country,
+//     nic,
+//     email,
+//     date,
+//     paymentId
+//   } = req.body;
+
+//   try {
+//     const formattedSessionDate = sessionDate; 
+//     const formattedSessionTime =
+//       sessionTime.length === 5 ? sessionTime + ":00" : sessionTime;
+
+//     const [countResult] = await pool.execute(
+//       `SELECT COUNT(*) AS count FROM appointments 
+//        WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
+//       [doctorId, hospital, formattedSessionDate, formattedSessionTime]
+//     );
+
+//     const currentCount = countResult[0].count;
+
+//     if (currentCount >= 5) {
+//       return res.status(400).json({ error: "This session is fully booked." });
+//     }
+
+//     await pool.execute(
+//       `INSERT INTO appointments 
+//         (doctor_id, doctor_name, hospital, session_date, session_time,
+//          patient_name, phone, country, nic, email, date, payment_id) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         doctorId,
+//         doctorName,
+//         hospital,
+//         formattedSessionDate,
+//         formattedSessionTime,
+//         patientName,
+//         phone,
+//         country,
+//         nic,
+//         email,
+//         date,
+//         paymentId
+//       ]
+//     );
+
+//     res.status(200).json({ message: "Appointment booked successfully." });
+
+//   } catch (err) {
+//     console.error("Appointment Booking Error:", err);
+//     res.status(500).json({ error: "Server error. Try again later." });
+//   }
+// });
+
+
+// module.exports = router;
+
+
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db");
+const {
+  createAppointment,
+  countAppointments,
+} = require("../controllers/appointmentsController");
 
-// Get appointments for a specific doctor
-router.get("/doctor/:doctorId", async (req, res) => {
-  const { doctorId } = req.params;
-
-  try {
-    const [rows] = await db.query(
-      "SELECT * FROM appointments WHERE doctor_id = ? ORDER BY date DESC",
-      [doctorId]
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error("Error fetching doctor appointments:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+router.post("/", createAppointment); // ✅ clean
+router.get("/count/:doctorId", countAppointments);
 
 module.exports = router;
+
+
+
