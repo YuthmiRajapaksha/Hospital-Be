@@ -90,7 +90,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
+//user register
 router.post('/register', async (req, res) => {
   const { country, phone, email, title, firstName, lastName, idType, nicOrPassport, password } = req.body;
 
@@ -165,7 +165,7 @@ router.post('/login', async (req, res) => {
 });
 
 
-router.get('/profile', authenticateToken, (req, res) => {
+router.get('/login', authenticateToken, (req, res) => {
   res.json({ message: 'Protected data', user: req.user });
 });
 
