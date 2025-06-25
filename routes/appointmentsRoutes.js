@@ -485,10 +485,49 @@ const router = express.Router();
 const {
   createAppointment,
   countAppointments,
+  getAppointmentsByDoctorId,
 } = require("../controllers/appointmentsController");
 
 router.post("/", createAppointment); // ✅ clean
 router.get("/count/:doctorId", countAppointments);
+// routes/appointments.js
+router.get("/doctor/:doctorId", getAppointmentsByDoctorId);
+router.delete('/appointments/:id', async (req, res) => {
+  const [result] = await pool.query("DELETE FROM appointments WHERE id = ?", [req.params.id]);
+  res.json({ success: true });
+});
+
+router.put('/appointments/:id', async (req, res) => {
+  const id = req.params.id;
+  const { patient_name, phone, nic, email } = req.body;
+
+  try {
+    const [result] = await pool.query(
+      "UPDATE appointments SET patient_name = ?, phone = ?, nic = ?, email = ? WHERE id = ?",
+      [patient_name, phone, nic, email, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update appointment" });
+  }
+});
+
+// GET /api/doctors/:id
+router.get("/api/doctors/:id", async (req, res) => {
+  const [rows] = await pool.query("SELECT * FROM doctors WHERE id = ?", [req.params.id]);
+  if (rows.length > 0) {
+    res.json(rows[0]);
+  } else {
+    res.status(404).json({ message: "Doctor not found" });
+  }
+});
+     
 
 module.exports = router;
 
