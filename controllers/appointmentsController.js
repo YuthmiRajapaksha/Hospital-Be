@@ -91,10 +91,15 @@ const pool = require("../config/db"); // your mysql2 pool
 exports.countAppointments = async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
+    const { hospital, sessionDate, sessionTime } = req.query;
+
+    if (!hospital || !sessionDate || !sessionTime) {
+      return res.status(400).json({ error: "Missing query parameters" });
+    }
 
     const [rows] = await pool.query(
-      "SELECT COUNT(*) AS count FROM appointments WHERE doctor_id = ?",
-      [doctorId]
+      "SELECT COUNT(*) AS count FROM appointments WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?",
+      [doctorId, hospital, sessionDate, sessionTime]
     );
 
     res.json({ count: rows[0].count });
@@ -117,16 +122,22 @@ exports.createAppointment = async (req, res) => {
     nic,
     email,
     date,
-    paymentId
+    paymentId,
   } = req.body;
+
+  // 🔍 Add this:
+  console.log("Received appointment data:", req.body);
+
+  if (!hospital || !sessionDate || !sessionTime) {
+    return res.status(400).json({ error: "Missing session data" });
+  }
 
   try {
     const [result] = await pool.query(
       `INSERT INTO appointments (
         doctor_id, doctor_name, hospital, session_date, session_time,
         patient_name, phone, country, nic, email, date, payment_id
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         doctorId,
         doctorName,
@@ -139,16 +150,40 @@ exports.createAppointment = async (req, res) => {
         nic,
         email,
         date,
-        paymentId
+        paymentId,
       ]
     );
 
     res.status(201).json({ message: "Appointment saved", appointmentId: result.insertId });
   } catch (err) {
-    console.error("❌ Appointment Booking Error:", err);
+    console.error("❌ Appointment Booking Error:", err); // 👈 Show full error
     res.status(500).json({ error: "Database error" });
   }
 };
+
+
+// controllers/appointmentsController.js
+exports.getAppointmentsByDoctorId = async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+
+    const [rows] = await pool.query(
+      `SELECT id, doctor_name, hospital, session_date, session_time, 
+              patient_name, phone, email, nic, date
+       FROM appointments
+       WHERE doctor_id = ?
+       ORDER BY session_date DESC, session_time DESC`,
+      [doctorId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Error fetching appointments:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
 
 
 // module.exports = {
