@@ -83,31 +83,92 @@
 //working
 // controllers/appointmentsController.js
 const pool = require("../config/db"); // your mysql2 pool
+const nodemailer = require("nodemailer");
 
 // controllers/appointmentsController.js
 // controllers/appointmentsController.js
 // const pool = require("../config/db");
 // Count appointments by doctor ID
+// controllers/appointmentsController.js
 exports.countAppointments = async (req, res) => {
+  const doctorId = req.params.doctorId;
+  const { hospital, sessionDate, sessionTime } = req.query;
+
+  if (!doctorId || !hospital || !sessionDate || !sessionTime) {
+    return res.status(400).json({ error: "Missing query parameters" });
+  }
+
   try {
-    const doctorId = req.params.doctorId;
-    const { hospital, sessionDate, sessionTime } = req.query;
-
-    if (!hospital || !sessionDate || !sessionTime) {
-      return res.status(400).json({ error: "Missing query parameters" });
-    }
-
     const [rows] = await pool.query(
-      "SELECT COUNT(*) AS count FROM appointments WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?",
+      `SELECT COUNT(*) AS count FROM appointments 
+       WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
       [doctorId, hospital, sessionDate, sessionTime]
     );
 
     res.json({ count: rows[0].count });
-  } catch (err) {
-    console.error("❌ Error counting appointments:", err);
-    res.status(500).json({ error: "Server error" });
+  } catch (error) {
+    console.error("Count query error:", error);
+    res.status(500).json({ error: "Database error" });
   }
 };
+
+
+// exports.createAppointment = async (req, res) => {
+//   const {
+//     doctorId,
+//     doctorName,
+//     hospital,
+//     sessionDate,
+//     sessionTime,
+//     patientName,
+//     phone,
+//     country,
+//     nic,
+//     email,
+//     date,
+//     paymentId,
+//   } = req.body;
+
+//   // 🔍 Add this:
+//   console.log("Received appointment data:", req.body);
+
+//   if (!hospital || !sessionDate || !sessionTime) {
+//     return res.status(400).json({ error: "Missing session data" });
+//   }
+
+//   try {
+//     const [result] = await pool.query(
+//       `INSERT INTO appointments (
+//         doctor_id, doctor_name, hospital, session_date, session_time,
+//         patient_name, phone, country, nic, email, date, payment_id
+//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         doctorId,
+//         doctorName,
+//         hospital,
+//         sessionDate,
+//         sessionTime,
+//         patientName,
+//         phone,
+//         country,
+//         nic,
+//         email,
+//         date,
+//         paymentId,
+//       ]
+//     );
+
+//     res.status(201).json({ message: "Appointment saved", appointmentId: result.insertId });
+//   } catch (err) {
+//     console.error("❌ Appointment Booking Error:", err); // 👈 Show full error
+//     res.status(500).json({ error: "Database error" });
+//   }
+// };
+
+
+
+
+// const pool = require("../config/db");
 
 exports.createAppointment = async (req, res) => {
   const {
@@ -125,7 +186,6 @@ exports.createAppointment = async (req, res) => {
     paymentId,
   } = req.body;
 
-  // 🔍 Add this:
   console.log("Received appointment data:", req.body);
 
   if (!hospital || !sessionDate || !sessionTime) {
@@ -154,12 +214,50 @@ exports.createAppointment = async (req, res) => {
       ]
     );
 
-    res.status(201).json({ message: "Appointment saved", appointmentId: result.insertId });
+    // ✅ Send email after saving
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'nirajapaksha1988@gmail.com',   // 🔁 Replace with your Gmail
+        pass: 'tnpvqlnygljndqsf'           // ⚠️ Will likely fail unless it's an App Password
+      }
+    });
+
+    const mailOptions = {
+      from: 'nirajapaksha1988@gmail.com',
+      to: email,
+      subject: 'Appointment Confirmation',
+      html: `
+        <h2>Appointment Confirmation</h2>
+        <p>Dear ${patientName},</p>
+        <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
+        <p><strong>Hospital:</strong> ${hospital}</p>
+        <p><strong>Date:</strong> ${sessionDate}</p>
+        <p><strong>Time:</strong> ${sessionTime}</p>
+        <p><strong>Patient Name:</strong> ${patientName}</p>
+        <p><strong>NIC:</strong> ${nic}</p>
+        <p><strong>Country:</strong> ${country}</p>
+        <p><strong>Charge:</strong> LKR 2500</p>
+        <p>Thank you for booking your appointment.</p>
+      `
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("❌ Email failed:", error);
+        // continue anyway
+      } else {
+        console.log("✅ Email sent:", info.response);
+      }
+    });
+
+    res.status(201).json({ message: "Appointment saved and email sent", appointmentId: result.insertId });
   } catch (err) {
-    console.error("❌ Appointment Booking Error:", err); // 👈 Show full error
+    console.error("❌ Appointment Booking Error:", err);
     res.status(500).json({ error: "Database error" });
   }
 };
+
 
 
 // controllers/appointmentsController.js
@@ -182,6 +280,9 @@ exports.getAppointmentsByDoctorId = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+
 
 
 

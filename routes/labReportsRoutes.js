@@ -22,6 +22,7 @@ router.get("/count", async (req, res) => {
 router.get("/", getAllReports);
 router.post("/add", addLabReport);
 router.put("/update/:id", updateLabReport);
+
 router.delete("/delete/:id", deleteLabReport);
 router.get("/check/:referenceNumber", checkLabReportStatus);
 

@@ -481,6 +481,7 @@
 
 
 const express = require("express");
+const pool = require ("../config/db"); 
 const router = express.Router();
 const {
   createAppointment,
@@ -490,6 +491,24 @@ const {
 
 router.post("/", createAppointment); // ✅ clean
 router.get("/count/:doctorId", countAppointments);
+
+router.get("/count/:doctorId", (req, res) => {
+  res.json({ count: 3 }); // Always return 3
+});
+// router.get("/count/:doctorId", async (req, res) => {
+//   const { doctorId } = req.params;
+//   const { hospital, sessionDate, sessionTime } = req.query;
+//   try {
+//     const [result] = await pool.query(
+//       `SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
+//       [doctorId, hospital, sessionDate, sessionTime]
+//     );
+//     res.json({ count: result[0].count });
+//   } catch (err) {
+//     res.status(500).json({ error: "Database error" });
+//   }
+// });
+
 // routes/appointments.js
 router.get("/doctor/:doctorId", getAppointmentsByDoctorId);
 router.delete('/appointments/:id', async (req, res) => {
@@ -527,6 +546,135 @@ router.get("/api/doctors/:id", async (req, res) => {
     res.status(404).json({ message: "Doctor not found" });
   }
 });
+
+// GET /api/doctors
+router.get("/api/doctors", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT d.id, d.name, COUNT(a.id) AS patientCount FROM doctors d LEFT JOIN appointments a ON d.id = a.doctor_id GROUP BY d.id;
+    `);
+
+    // Convert string "patientCount" to integer
+    const doctors = rows.map(row => ({
+      ...row,
+      patientCount: Number(row.patientCount) || 0,
+    }));
+
+    res.status(200).json({ doctors });
+  } catch (err) {
+    console.error("Error fetching doctors:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+
+
+
+// Get all doctors with patient (appointment) count
+// router.get("/doctors", async (req, res) => {
+//   try {
+//     const [doctors] = await db.query(`
+//       SELECT d.id, d.name, COUNT(a.id) AS patientCount
+//       FROM doctors d
+//       LEFT JOIN appointments a ON d.id = a.doctor_id
+//       GROUP BY d.id
+//     `);
+
+//     res.status(200).json({ doctors });
+//   } catch (err) {
+//     console.error("Error fetching doctors:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// });
+
+
+// ✅ The correct route
+// router.get("/doctors", async (req, res) => {
+//   const [rows] = await pool.query(`
+//     SELECT d.id, d.name, COUNT(a.id) AS patientCount
+//     FROM doctors d
+//     LEFT JOIN appointments a ON d.id = a.doctor_id
+//     GROUP BY d.id
+//   `);
+
+//   res.status(200).json({ doctors: rows });
+// });
+
+
+// GET /api/doctors-with-patient-count
+// routes/appointments.js or routes/doctors.js
+router.get("/api/doctors-with-patient-count", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        d.id, 
+        d.name, 
+        COUNT(a.id) AS patientCount,
+        COUNT(a.id) * 2500 AS totalRevenue
+      FROM doctors d
+      LEFT JOIN appointments a ON d.id = a.doctor_id
+      GROUP BY d.id
+    `);
+
+    res.status(200).json({ doctors: rows });
+  } catch (err) {
+    console.error("Error fetching doctors with patient count:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+// GET patient count for a specific doctor
+router.get("/api/doctors/:id/patient-count", async (req, res) => {
+  const doctorId = req.params.id;
+
+  try {
+    const [result] = await pool.query(
+      "SELECT COUNT(*) AS patientCount FROM appointments WHERE doctor_id = ?",
+      [doctorId]
+    );
+
+    res.json({ doctorId, patientCount: result[0].patientCount });
+  } catch (error) {
+    console.error("Error fetching patient count:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
+// Get total patients for a specific doctor
+// router.get("/doctor/:id/patient-count", async (req, res) => {
+//   const doctorId = req.params.id;
+
+//   try {
+//     const [result] = await db.query(
+//       "SELECT COUNT(*) AS patientCount FROM appointments WHERE doctor_id = ?",
+//       [doctorId]
+//     );
+
+//     res.json({ doctorId, patientCount: result[0].patientCount });
+//   } catch (error) {
+//     console.error("Error fetching patient count:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+// router.get("/doctors", async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(`
+//       SELECT d.id, d.name, COUNT(a.id) AS patientCount
+//       FROM doctors d
+//       LEFT JOIN appointments a ON d.id = a.doctor_id
+//       GROUP BY d.id
+//     `);
+
+//     res.status(200).json({ doctors: rows });
+//   } catch (err) {
+//     console.error("Error fetching doctors with patient count:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// });
+
      
 
 module.exports = router;

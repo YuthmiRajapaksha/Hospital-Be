@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const db = require('./config/db'); // Your MySQL DB connection
 const authRoutes = require('./routes/auth'); // The new login route
 const path = require('path');
+require("dotenv").config();
+
 
 
 // Import routes
@@ -15,6 +17,7 @@ const appointmentsRoutes = require('./routes/appointmentsRoutes');
 const createPaymentIntent = require("./routes/createPaymentIntent");
 const bookingFormRoutes = require("./routes/bookingFormRoutes");
 const doctorSearchRoutes = require("./routes/doctorSearchRoutes");
+const authenticateToken =require ("./middleware/authenticateToken");
 const auth = require ("./routes/auth");
 const sessionRoutes = require("./routes/session");
 
@@ -37,6 +40,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/login', registerRoutes);
 app.use('/api/register', registerRoutes);
 
+
+// Protected route example
+app.get("/api/profile", authenticateToken, (req, res) => {
+  res.json({ message: "This is your profile", user: req.user });
+});
+
 app.use('/api', registerRoutes);
 
 app.use("/api/sessions", sessionRoutes);
@@ -46,6 +55,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // After other routes
 app.use("/api/appointments", appointmentsRoutes);
+app.use("/", appointmentsRoutes);
 
 // app.use("/api/create-payment-intent", createPaymentIntent);
 app.use("/api", createPaymentIntent);
