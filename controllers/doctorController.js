@@ -99,10 +99,42 @@ const deleteDoctor = async (req, res) => {
   }
 };
 
+
+
+// Reset Doctor Password (by admin or authorized user)
+// Doctor changes their own password
+const changeDoctorPassword = async (req, res) => {
+  const doctorId = req.user?.id;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!doctorId) return res.status(401).json({ message: 'Unauthorized' });
+  if (!currentPassword || !newPassword)
+    return res.status(400).json({ message: 'Current and new password required' });
+
+  try {
+    const [rows] = await db.query('SELECT password FROM doctors WHERE id = ?', [doctorId]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Doctor not found' });
+
+    const doctor = rows[0];
+    if (doctor.password !== currentPassword)
+      return res.status(400).json({ message: 'Current password is incorrect' });
+
+    await db.query('UPDATE doctors SET password = ? WHERE id = ?', [newPassword, doctorId]);
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Database error' });
+  }
+};
+
+
+
 module.exports = {
   addDoctor,
   getDoctors,
   getDoctorById,
   updateDoctor,
-  deleteDoctor
+  deleteDoctor,
+  changeDoctorPassword 
 };
