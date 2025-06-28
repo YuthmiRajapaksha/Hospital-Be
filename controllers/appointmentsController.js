@@ -84,6 +84,8 @@
 // controllers/appointmentsController.js
 const pool = require("../config/db"); // your mysql2 pool
 const nodemailer = require("nodemailer");
+const emailService = require("../utils/emailService");
+
 
 // controllers/appointmentsController.js
 // controllers/appointmentsController.js
@@ -170,6 +172,94 @@ exports.countAppointments = async (req, res) => {
 
 // const pool = require("../config/db");
 
+// exports.createAppointment = async (req, res) => {
+//   const {
+//     doctorId,
+//     doctorName,
+//     hospital,
+//     sessionDate,
+//     sessionTime,
+//     patientName,
+//     phone,
+//     country,
+//     nic,
+//     email,
+//     date,
+//     paymentId,
+//   } = req.body;
+
+//   console.log("Received appointment data:", req.body);
+
+//   if (!hospital || !sessionDate || !sessionTime) {
+//     return res.status(400).json({ error: "Missing session data" });
+//   }
+
+//   try {
+//     const [result] = await pool.query(
+//       `INSERT INTO appointments (
+//         doctor_id, doctor_name, hospital, session_date, session_time,
+//         patient_name, phone, country, nic, email, date, payment_id
+//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         doctorId,
+//         doctorName,
+//         hospital,
+//         sessionDate,
+//         sessionTime,
+//         patientName,
+//         phone,
+//         country,
+//         nic,
+//         email,
+//         date,
+//         paymentId,
+//       ]
+//     );
+
+//     // ✅ Send email after saving
+//     const transporter = nodemailer.createTransport({
+//       service: 'gmail',
+//       auth: {
+//         user: 'nirajapaksha1988@gmail.com',   // 🔁 Replace with your Gmail
+//         pass: 'tnpvqlnygljndqsf'           // ⚠️ Will likely fail unless it's an App Password
+//       }
+//     });
+
+//     const mailOptions = {
+//       from: 'nirajapaksha1988@gmail.com',
+//       to: email,
+//       subject: 'Appointment Confirmation',
+//       html: `
+//         <h2>Appointment Confirmation</h2>
+//         <p>Dear ${patientName},</p>
+//         <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
+//         <p><strong>Hospital:</strong> ${hospital}</p>
+//         <p><strong>Date:</strong> ${sessionDate}</p>
+//         <p><strong>Time:</strong> ${sessionTime}</p>
+//         <p><strong>Patient Name:</strong> ${patientName}</p>
+//         <p><strong>NIC:</strong> ${nic}</p>
+//         <p><strong>Country:</strong> ${country}</p>
+//         <p><strong>Charge:</strong> LKR 2500</p>
+//         <p>Thank you for booking your appointment.</p>
+//       `
+//     };
+
+//     transporter.sendMail(mailOptions, (error, info) => {
+//       if (error) {
+//         console.error("❌ Email failed:", error);
+//         // continue anyway
+//       } else {
+//         console.log("✅ Email sent:", info.response);
+//       }
+//     });
+
+//     res.status(201).json({ message: "Appointment saved and email sent", appointmentId: result.insertId });
+//   } catch (err) {
+//     console.error("❌ Appointment Booking Error:", err);
+//     res.status(500).json({ error: "Database error" });
+//   }
+// };
+
 exports.createAppointment = async (req, res) => {
   const {
     doctorId,
@@ -214,53 +304,29 @@ exports.createAppointment = async (req, res) => {
       ]
     );
 
-    // ✅ Send email after saving
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'nirajapaksha1988@gmail.com',   // 🔁 Replace with your Gmail
-        pass: 'tnpvqlnygljndqsf'           // ⚠️ Will likely fail unless it's an App Password
-      }
+    // ✅ Send confirmation email after successful insert
+    await emailService.sendAppointmentEmail({
+      patientName,
+      email,
+      doctorName,
+      hospital,
+      sessionDate,
+      sessionTime,
+      phone,
+  country,
+  nic,
+  charge: 2500
     });
 
-    const mailOptions = {
-      from: 'nirajapaksha1988@gmail.com',
-      to: email,
-      subject: 'Appointment Confirmation',
-      html: `
-        <h2>Appointment Confirmation</h2>
-        <p>Dear ${patientName},</p>
-        <p><strong>Doctor:</strong> Dr. ${doctorName}</p>
-        <p><strong>Hospital:</strong> ${hospital}</p>
-        <p><strong>Date:</strong> ${sessionDate}</p>
-        <p><strong>Time:</strong> ${sessionTime}</p>
-        <p><strong>Patient Name:</strong> ${patientName}</p>
-        <p><strong>NIC:</strong> ${nic}</p>
-        <p><strong>Country:</strong> ${country}</p>
-        <p><strong>Charge:</strong> LKR 2500</p>
-        <p>Thank you for booking your appointment.</p>
-      `
-    };
+    return res.status(201).json({ message: "Appointment created and email sent successfully" });
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error("❌ Email failed:", error);
-        // continue anyway
-      } else {
-        console.log("✅ Email sent:", info.response);
-      }
-    });
-
-    res.status(201).json({ message: "Appointment saved and email sent", appointmentId: result.insertId });
-  } catch (err) {
-    console.error("❌ Appointment Booking Error:", err);
-    res.status(500).json({ error: "Database error" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Something went wrong" });
   }
 };
 
-
-
-// controllers/appointmentsController.js
+// controllers/appointmentsController.js 
 exports.getAppointmentsByDoctorId = async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
