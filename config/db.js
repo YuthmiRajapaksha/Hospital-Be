@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
-  password: '', // adjust as needed
+  password: '', 
   database: 'hospital_db',
   waitForConnections: true,
   connectionLimit: 10,
@@ -14,7 +14,7 @@ const pool = mysql.createPool({
 
 
 
-
+  
 // Async function to run all table setups
 async function setupDatabase() {
   try {
