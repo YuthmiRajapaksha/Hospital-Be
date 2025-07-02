@@ -488,13 +488,37 @@ const {
   countAppointments,
   getAppointmentsByDoctorId,
 } = require("../controllers/appointmentsController");
+const appointmentsController = require("../controllers/appointmentsController");
 
 router.post("/", createAppointment); // ✅ clean
-router.get("/count/:doctorId", countAppointments);
+// router.get("/count/:doctorId", countAppointments);
 
-router.get("/count/:doctorId", (req, res) => {
-  res.json({ count: 3 }); // Always return 3
+
+router.delete('/appointments/:id', appointmentsController.deleteAppointment)
+
+
+router.get('/count/:doctorId', async (req, res) => {
+  const { doctorId } = req.params;
+  const { hospital, sessionDate, sessionTime } = req.query;
+
+  if (!hospital || !sessionDate || !sessionTime) {
+    return res.status(400).json({ error: "Missing query parameters" });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) AS count FROM appointments WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
+      [doctorId, hospital, sessionDate, sessionTime]
+    );
+    res.json(rows[0]); // { count: number }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Database error" });
+  }
 });
+// router.get("/count/:doctorId", (req, res) => {
+//   res.json({ count: 3 }); // Always return 3
+// });
 // router.get("/count/:doctorId", async (req, res) => {
 //   const { doctorId } = req.params;
 //   const { hospital, sessionDate, sessionTime } = req.query;

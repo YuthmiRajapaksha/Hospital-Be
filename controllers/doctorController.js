@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const path = require('path');
+const nodemailer = require("nodemailer");
 
 // Add a Doctor with photo
 const addDoctor = async (req, res) => {
@@ -24,6 +25,57 @@ const addDoctor = async (req, res) => {
     res.status(500).json({ message: 'Database error', error: err });
   }
 };
+
+////////////////////////////////////////////////////////////////////////////////
+exports.addDoctor = async (req, res) => {
+  const { name, specialization, email, contactNumber, userName, password } = req.body;
+  const photo = req.file ? req.file.filename : null;
+
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO doctors (name, specialization, email, contactNumber, userName, password, photo) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [name, specialization, email, contactNumber, userName, password, photo]
+    );
+
+    // ✅ Send credentials email
+    await emailService.sendDoctorCredentials({
+      name,
+      email,
+      userName,
+      password,
+    });
+
+    res.status(201).json({ message: "Doctor added and credentials email sent!" });
+  } catch (error) {
+    console.error("Error adding doctor:", error);
+    res.status(500).json({ message: "Failed to add doctor" });
+  }
+};
+
+
+// Example updateDoctor route handler
+exports.updateDoctor = async (req, res) => {
+  const doctorId = req.params.id;
+  const { name, specialization, email, contactNumber, userName } = req.body;
+  const photo = req.file ? req.file.filename : null;
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE doctors SET name=?, specialization=?, email=?, contactNumber=?, userName=?, photo=?
+       WHERE id=?`,
+      [name, specialization, email, contactNumber, userName, photo, doctorId]
+    );
+
+    res.status(200).json({ message: "Doctor updated successfully!" });
+
+  } catch (error) {
+    console.error("❌ Error updating doctor:", error);
+    res.status(500).json({ message: "Failed to update doctor" });
+  }
+}; 
+//////////////////////
+
 
 // Get all doctors
 const getDoctors = async (req, res) => {

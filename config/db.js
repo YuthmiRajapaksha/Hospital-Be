@@ -84,6 +84,7 @@ async function setupDatabase() {
 
     // ADD MISSING COLUMNS TO APPOINTMENTS
     const columnsToAdd = [
+      { name: "user_id", type: "INT NULL" },
       { name: "phone", type: "VARCHAR(20) NOT NULL" },
       { name: "country", type: "VARCHAR(50) NOT NULL" },
       { name: "nic", type: "VARCHAR(20) NOT NULL" },
@@ -108,6 +109,26 @@ async function setupDatabase() {
         console.log(`ℹ️ Column '${name}' already exists in appointments.`);
       }
     }
+
+
+    const [fkRows] = await pool.query(`
+  SELECT COUNT(*) AS count
+  FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'appointments'
+    AND COLUMN_NAME = 'user_id'
+    AND REFERENCED_TABLE_NAME = 'users';
+`);
+
+if (fkRows[0].count === 0) {
+  await pool.query(`
+    ALTER TABLE appointments 
+    ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+  `);
+  console.log("✅ Foreign key for 'user_id' added.");
+} else {
+  console.log("ℹ️ Foreign key for 'user_id' already exists.");
+}
 //     await pool.query(`
 //   ALTER TABLE appointments ADD COLUMN payment_id VARCHAR(100) DEFAULT NULL;
 // `);
