@@ -85,13 +85,10 @@
 const pool = require("../config/db"); // your mysql2 pool
 const nodemailer = require("nodemailer");
 const emailService = require("../utils/emailService");
+const appointmentsController = require("../controllers/appointmentsController");
 
 
-// controllers/appointmentsController.js
-// controllers/appointmentsController.js
-// const pool = require("../config/db");
-// Count appointments by doctor ID
-// controllers/appointmentsController.js
+
 exports.countAppointments = async (req, res) => {
   const doctorId = req.params.doctorId;
   const { hospital, sessionDate, sessionTime } = req.query;
@@ -348,6 +345,44 @@ exports.getAppointmentsByDoctorId = async (req, res) => {
 };
 
 
+exports.deleteAppointment = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 1️⃣ Get appointment details before deleting
+    const [rows] = await pool.query(
+      "SELECT * FROM appointments WHERE id = ?",
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    const appointment = rows[0];
+
+    // 2️⃣ Delete it
+    await pool.query("DELETE FROM appointments WHERE id = ?", [id]);
+
+    // 3️⃣ Send cancellation email
+    await emailService.sendCancellationEmail({
+      patientName: appointment.patient_name,
+      email: appointment.email,
+      doctorName: appointment.doctor_name,
+      hospital: appointment.hospital,
+      sessionDate: appointment.session_date,
+      sessionTime: appointment.session_time,
+      phone: appointment.phone,
+      country: appointment.country,
+      nic: appointment.nic,
+    });
+
+    res.json({ message: "Appointment deleted and cancellation email sent." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
 
 
 

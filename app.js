@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -5,7 +7,7 @@ const bodyParser = require("body-parser");
 const db = require('./config/db'); // Your MySQL DB connection
 const authRoutes = require('./routes/auth'); // The new login route
 const path = require('path');
-require("dotenv").config();
+
 
 
 
@@ -69,7 +71,6 @@ app.use("/api/bookingform", doctorSearchRoutes);
 // app.use("/api/appointments", appointmentsRoutes);
 
 app.use("/api/create-payment-intent", createPaymentIntent);
-
 
 
 

@@ -213,7 +213,7 @@ exports.sendAppointmentEmail = async ({
             <p>Thank you for booking your appointment with us.</p>
           </div>
           <div class="footer">
-            &copy; 2025 Your Hospital Name. All rights reserved.
+            &copy; 2025 MediCre Hospital. All rights reserved.
           </div>
         </div>
       </body>
@@ -226,6 +226,132 @@ exports.sendAppointmentEmail = async ({
       console.log('❌ Email send failed:', error);
     } else {
       console.log('✅ Email sent:', info.response);
+    }
+  });
+};
+
+
+
+
+exports.sendCancellationEmail = async ({
+  patientName,
+  email,
+  doctorName,
+  hospital,
+  sessionDate,
+  sessionTime,
+  phone,
+  country,
+  nic,
+}) => {
+  const mailOptions = {
+    from: 'nirajapaksha1998@gmail.com',
+    to: email,
+    subject: 'Your Appointment has been Cancelled',
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Appointment Cancellation</title>
+        <style>
+          body { background: #f5f7fa; font-family: Arial; }
+          .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+          .header { background: #d32f2f; color: #fff; padding: 20px 30px; text-align: center; }
+          .content { padding: 30px; color: #333; }
+          .details p { margin: 8px 0; }
+          .footer { background: #f0f0f0; padding: 20px 30px; text-align: center; font-size: 12px; color: #777; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Appointment Cancelled</h1>
+          </div>
+          <div class="content">
+            <p>Dear ${patientName},</p>
+            <p>Your appointment has been cancelled . Below are the details:</p>
+            <div class="details">
+              <p><strong>Doctor:</strong> ${doctorName}</p>
+              <p><strong>Hospital:</strong> ${hospital}</p>
+              <p><strong>Session Date:</strong> ${sessionDate}</p>
+              <p><strong>Session Time:</strong> ${sessionTime}</p>
+              <p><strong>Phone:</strong> ${phone}</p>
+              <p><strong>Country:</strong> ${country}</p>
+              <p><strong>NIC:</strong> ${nic}</p>
+            </div>
+            <p>If you wish to book again, please visit our website.</p>
+          </div>
+          <div class="footer">
+            &copy; 2025 MediCre Hospital. All rights reserved.
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('❌ Failed to send cancellation email:', error);
+    } else {
+      console.log('✅ Cancellation email sent:', info.response);
+    }
+  });
+};
+
+
+
+// ✅ emailService.js
+
+exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
+  const mailOptions = {
+    from: 'nirajapaksha1998@gmail.com',
+    to: email,
+    subject: 'Your Doctor Account Credentials',
+    html: `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Doctor Account Details</title>
+      <style>
+        body { background: #f5f7fa; font-family: Arial; }
+        .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .header { background: #2B909B; color: #fff; padding: 20px 30px; text-align: center; }
+        .content { padding: 30px; color: #333; }
+        .details p { margin: 8px 0; }
+        .footer { background: #f0f0f0; padding: 20px 30px; text-align: center; font-size: 12px; color: #777; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Doctor Account Created</h1>
+        </div>
+        <div class="content">
+          <p>Dear Dr. ${name},</p>
+          <p>Your account has been created successfully. Here are your login details:</p>
+          <div class="details">
+            <p><strong>Username:</strong> ${userName}</p>
+            <p><strong>Password:</strong> ${password}</p>
+          </div>
+          <p>Please keep this information safe and secure.</p>
+        </div>
+        <div class="footer">
+          &copy; 2025 MediCre Hospital. All rights reserved.
+        </div>
+      </div>
+    </body>
+    </html>
+    `,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('❌ Failed to send doctor credentials:', error);
+    } else {
+      console.log('✅ Doctor credentials email sent:', info.response);
     }
   });
 };
