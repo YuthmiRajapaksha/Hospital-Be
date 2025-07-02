@@ -304,24 +304,110 @@ exports.sendCancellationEmail = async ({
 
 // ✅ emailService.js
 
+// exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
+  
+//   const mailOptions = {
+//     from: 'nirajapaksha1998@gmail.com',
+//     to: email,
+//     subject: 'Your Doctor Account Credentials',
+//     html: `
+//     <!DOCTYPE html>
+//     <html lang="en">
+//     <head>
+//       <meta charset="UTF-8" />
+//       <title>Doctor Account Details</title>
+//       <style>
+//         body { background: #f5f7fa; font-family: Arial; }
+//         .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+//         .header { background: #2B909B; color: #fff; padding: 20px 30px; text-align: center; }
+//         .content { padding: 30px; color: #333; }
+//         .details p { margin: 8px 0; }
+//         .footer { background: #f0f0f0; padding: 20px 30px; text-align: center; font-size: 12px; color: #777; }
+//       </style>
+//     </head>
+//     <body>
+//       <div class="container">
+//         <div class="header">
+//           <h1>Doctor Account Created</h1>
+//         </div>
+//         <div class="content">
+//           <p>Dear Dr. ${name},</p>
+//           <p>Your account has been created successfully. Here are your login details:</p>
+//           <div class="details">
+//             <p><strong>Username:</strong> ${userName}</p>
+//             <p><strong>Password:</strong> ${password}</p>
+//           </div>
+//           <p>Please keep this information safe and secure.</p>
+//         </div>
+//         <div class="footer">
+//           &copy; 2025 MediCre Hospital. All rights reserved.
+//         </div>
+//       </div>
+//     </body>
+//     </html>
+//     `,
+//   };
+
+//   transporter.sendMail(mailOptions, (error, info) => {
+//     if (error) {
+//       console.error('❌ Failed to send doctor credentials:', error);
+//     } else {
+//       console.log('✅ Doctor credentials email sent:', info.response);
+//     }
+//   });
+// };
+
+
+
 exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
+  console.log(">>> Sending credentials:");
+  console.log({ name, email, userName, password });
+
   const mailOptions = {
     from: 'nirajapaksha1998@gmail.com',
     to: email,
     subject: 'Your Doctor Account Credentials',
-    html: `
-    <!DOCTYPE html>
-    <html lang="en">
+   html: `
+  <!DOCTYPE html>
+  <html lang="en">
     <head>
       <meta charset="UTF-8" />
       <title>Doctor Account Details</title>
       <style>
-        body { background: #f5f7fa; font-family: Arial; }
-        .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .header { background: #2B909B; color: #fff; padding: 20px 30px; text-align: center; }
-        .content { padding: 30px; color: #333; }
-        .details p { margin: 8px 0; }
-        .footer { background: #f0f0f0; padding: 20px 30px; text-align: center; font-size: 12px; color: #777; }
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f5f7fa;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 30px auto;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          overflow: hidden;
+        }
+        .header {
+          background: #2B909B;
+          color: #fff;
+          padding: 20px 30px;
+          text-align: center;
+        }
+        .content {
+          padding: 30px;
+          color: #333;
+        }
+        .content p {
+          margin: 8px 0;
+        }
+        .footer {
+          background: #f0f0f0;
+          text-align: center;
+          padding: 20px 30px;
+          font-size: 12px;
+          color: #777;
+        }
       </style>
     </head>
     <body>
@@ -331,11 +417,9 @@ exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
         </div>
         <div class="content">
           <p>Dear Dr. ${name},</p>
-          <p>Your account has been created successfully. Here are your login details:</p>
-          <div class="details">
-            <p><strong>Username:</strong> ${userName}</p>
-            <p><strong>Password:</strong> ${password}</p>
-          </div>
+          <p>Your account has been created successfully. Here are your login credentials:</p>
+          <p><strong>Username:</strong> ${userName}</p>
+          <p><strong>Password:</strong> ${password}</p>
           <p>Please keep this information safe and secure.</p>
         </div>
         <div class="footer">
@@ -343,11 +427,11 @@ exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
         </div>
       </div>
     </body>
-    </html>
-    `,
+  </html>
+`
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
+  await transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error('❌ Failed to send doctor credentials:', error);
     } else {

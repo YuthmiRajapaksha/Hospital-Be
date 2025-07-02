@@ -1,44 +1,56 @@
 const db = require('../config/db');
+const pool = require("../config/db"); 
 const path = require('path');
 const nodemailer = require("nodemailer");
+const emailService = require ("../utils/emailService");
 
-// Add a Doctor with photo
+
+// ✅ doctorController.js
+// const emailService = require("../utils/emailService");
 const addDoctor = async (req, res) => {
-  const { name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password } = req.body;
-  const photoPath = req.file ? req.file.path : null;
+  const {
+    name,
+    specialization,
+    workExperience,
+    qualifications,
+    address,
+    email,
+    contactNumber,
+    userName,
+    password,
+  } = req.body;
 
-  if (!name || !specialization || !userName || !password) {
-    return res.status(400).json({ message: 'Name, Specialization, Username, and Password are required!' });
+  const photo = req.file ? req.file.filename : null;
+
+  if (!name || !specialization || !userName || !password || !email) {
+    return res.status(400).json({
+      message: "Name, Specialization, Username, Password, and Email are required!",
+    });
   }
 
   const query = `
-    INSERT INTO doctors (name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photo)
+    INSERT INTO doctors 
+      (name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photo)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
-  const values = [name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photoPath];
+
+  const values = [
+    name,
+    specialization,
+    workExperience || null,
+    qualifications || null,
+    address || null,
+    email,
+    contactNumber || null,
+    userName,
+    password,
+    photo,
+  ];
 
   try {
-    const [result] = await db.query(query, values);
-    res.status(201).json({ message: 'Doctor added successfully', doctorId: result.insertId });
-  } catch (err) {
-    console.error('Error inserting doctor:', err);
-    res.status(500).json({ message: 'Database error', error: err });
-  }
-};
+    const [result] = await pool.query(query, values);
 
-////////////////////////////////////////////////////////////////////////////////
-exports.addDoctor = async (req, res) => {
-  const { name, specialization, email, contactNumber, userName, password } = req.body;
-  const photo = req.file ? req.file.filename : null;
-
-  try {
-    const [result] = await pool.query(
-      `INSERT INTO doctors (name, specialization, email, contactNumber, userName, password, photo) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, specialization, email, contactNumber, userName, password, photo]
-    );
-
-    // ✅ Send credentials email
+    // ✅ AFTER INSERTING → send credentials to entered email
     await emailService.sendDoctorCredentials({
       name,
       email,
@@ -46,12 +58,70 @@ exports.addDoctor = async (req, res) => {
       password,
     });
 
-    res.status(201).json({ message: "Doctor added and credentials email sent!" });
-  } catch (error) {
-    console.error("Error adding doctor:", error);
-    res.status(500).json({ message: "Failed to add doctor" });
+    res
+      .status(201)
+      .json({
+        message: "Doctor added and credentials email sent!",
+        doctorId: result.insertId,
+      });
+  } catch (err) {
+    console.error("Error inserting doctor:", err);
+    res.status(500).json({ message: "Database error", error: err });
   }
 };
+
+
+// // Add a Doctor with photo
+// const addDoctor = async (req, res) => {
+//   const { name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password } = req.body;
+//   const photoPath = req.file ? req.file.path : null;
+
+//   if (!name || !specialization || !userName || !password) {
+//     return res.status(400).json({ message: 'Name, Specialization, Username, and Password are required!' });
+//   }
+
+//   const query = `
+//     INSERT INTO doctors (name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photo)
+//     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//   `;
+//   const values = [name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photoPath];
+
+//   try {
+//     const [result] = await db.query(query, values);
+    
+//     res.status(201).json({ message: 'Doctor added successfully', doctorId: result.insertId });
+//   } catch (err) {
+//     console.error('Error inserting doctor:', err);
+//     res.status(500).json({ message: 'Database error', error: err });
+//   }
+// };
+
+// ////////////////////////////////////////////////////////////////////////////////
+// exports.addDoctor = async (req, res) => {
+//   const { name, specialization, email, contactNumber, userName, password } = req.body;
+//   const photo = req.file ? req.file.filename : null;
+
+//   try {
+//     const [result] = await pool.query(
+//       `INSERT INTO doctors (name, specialization, email, contactNumber, userName, password, photo) 
+//        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+//       [name, specialization, email, contactNumber, userName, password, photo]
+//     );
+
+//     // ✅ Send credentials email
+//     await emailService.sendDoctorCredentials({
+//       name,
+//       email,
+//       userName,
+//       password,
+//     });
+
+//     res.status(201).json({ message: "Doctor added and credentials email sent!" });
+//   } catch (error) {
+//     console.error("Error adding doctor:", error);
+//     res.status(500).json({ message: "Failed to add doctor" });
+//   }
+// };
 
 
 // Example updateDoctor route handler
