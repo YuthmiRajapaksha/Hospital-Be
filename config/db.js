@@ -9,7 +9,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-   timezone: "+05:30",
+  dateStrings: true,
+  //  timezone: "+05:30",
 });
 
 
@@ -94,6 +95,7 @@ async function setupDatabase() {
   { name: "session_date", type: "DATE DEFAULT NULL" },
   { name: "session_time", type: "TIME NOT NULL" },
   { name: "doctor_name", type: "VARCHAR(100) NOT NULL" },
+  { name: "status", type: "VARCHAR(20) DEFAULT 'active'" },
     ];
 
     for (const { name, type } of columnsToAdd) {

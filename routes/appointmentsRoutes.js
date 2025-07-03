@@ -496,6 +496,40 @@ router.post("/", createAppointment); // ✅ clean
 
 router.delete('/appointments/:id', appointmentsController.deleteAppointment)
 
+// ✅ Update appointment status (cancel)
+router.put("/appointments/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    await pool.query(
+      "UPDATE appointments SET status = ? WHERE id = ?",
+      [status, id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update status" });
+  }
+});
+
+// ✅ Get cancelled appointments for a doctor
+router.get("/api/appointments/doctor/:doctorId/cancelled", async (req, res) => {
+  const { doctorId } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM appointments WHERE doctor_id = ? AND status = 'cancelled'",
+      [doctorId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch cancelled appointments" });
+  }
+});
+
+
 
 router.get('/count/:doctorId', async (req, res) => {
   const { doctorId } = req.params;
