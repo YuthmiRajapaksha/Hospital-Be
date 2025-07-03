@@ -213,7 +213,7 @@ exports.sendAppointmentEmail = async ({
             <p>Thank you for booking your appointment with us.</p>
           </div>
           <div class="footer">
-            &copy; 2025 MediCre Hospital. All rights reserved.
+            &copy; 2025 MediCare Hospital. All rights reserved. 
           </div>
         </div>
       </body>
@@ -283,7 +283,7 @@ exports.sendCancellationEmail = async ({
             <p>If you wish to book again, please visit our website.</p>
           </div>
           <div class="footer">
-            &copy; 2025 MediCre Hospital. All rights reserved.
+            &copy; 2025 MediCare Hospital. All rights reserved.
           </div>
         </div>
       </body>
@@ -423,7 +423,7 @@ exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
           <p>Please keep this information safe and secure.</p>
         </div>
         <div class="footer">
-          &copy; 2025 MediCre Hospital. All rights reserved.
+          &copy; 2025 MediCare Hospital. All rights reserved.
         </div>
       </div>
     </body>
