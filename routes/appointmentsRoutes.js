@@ -487,31 +487,50 @@ const {
   createAppointment,
   countAppointments,
   getAppointmentsByDoctorId,
+  changeAppointmentStatus,
 } = require("../controllers/appointmentsController");
 const appointmentsController = require("../controllers/appointmentsController");
+const authenticateToken = require("../middleware/authenticateToken");
 
-router.post("/", createAppointment); // ✅ clean
+
+router.post("/", authenticateToken, createAppointment);
+router.put("/appointments/:id/status", authenticateToken, changeAppointmentStatus);
+ // ✅ clean
 // router.get("/count/:doctorId", countAppointments);
 
 
-router.delete('/appointments/:id', appointmentsController.deleteAppointment)
+// router.delete('/appointments/:id', appointmentsController.deleteAppointment)
 
 // ✅ Update appointment status (cancel)
-router.put("/appointments/:id/status", async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
+// router.put("/appointments/:id/status", async (req, res) => {
+//   const { id } = req.params;
+//   const { status } = req.body;
 
-  try {
-    await pool.query(
-      "UPDATE appointments SET status = ? WHERE id = ?",
-      [status, id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to update status" });
-  }
-});
+//   try {
+//     await pool.query(
+//       "UPDATE appointments SET status = ? WHERE id = ?",
+//       [status, id]
+//     );
+
+//     // Send cancellation email
+//         await emailService.sendCancellationEmail({
+//           patientName: appointment.patient_name,
+//           email: appointment.email,
+//           doctorName: appointment.doctor_name,
+//           hospital: appointment.hospital,
+//           sessionDate: appointment.session_date,
+//           sessionTime: appointment.session_time,
+//           phone: appointment.phone,
+//           country: appointment.country,
+//           nic: appointment.nic,
+//         });
+
+//     res.json({ success: true });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Failed to update status" });
+//   }
+// });
 
 // ✅ Get cancelled appointments for a doctor
 router.get("/api/appointments/doctor/:doctorId/cancelled", async (req, res) => {
@@ -550,29 +569,14 @@ router.get('/count/:doctorId', async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
-// router.get("/count/:doctorId", (req, res) => {
-//   res.json({ count: 3 }); // Always return 3
-// });
-// router.get("/count/:doctorId", async (req, res) => {
-//   const { doctorId } = req.params;
-//   const { hospital, sessionDate, sessionTime } = req.query;
-//   try {
-//     const [result] = await pool.query(
-//       `SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
-//       [doctorId, hospital, sessionDate, sessionTime]
-//     );
-//     res.json({ count: result[0].count });
-//   } catch (err) {
-//     res.status(500).json({ error: "Database error" });
-//   }
-// });
+
 
 // routes/appointments.js
 router.get("/doctor/:doctorId", getAppointmentsByDoctorId);
-router.delete('/appointments/:id', async (req, res) => {
-  const [result] = await pool.query("DELETE FROM appointments WHERE id = ?", [req.params.id]);
-  res.json({ success: true });
-});
+// router.delete('/appointments/:id', async (req, res) => {
+//   const [result] = await pool.query("DELETE FROM appointments WHERE id = ?", [req.params.id]);
+//   res.json({ success: true });
+// });
 
 router.put('/appointments/:id', async (req, res) => {
   const id = req.params.id;
@@ -625,40 +629,6 @@ router.get("/api/doctors", async (req, res) => {
   }
 });
 
-
-
-
-// Get all doctors with patient (appointment) count
-// router.get("/doctors", async (req, res) => {
-//   try {
-//     const [doctors] = await db.query(`
-//       SELECT d.id, d.name, COUNT(a.id) AS patientCount
-//       FROM doctors d
-//       LEFT JOIN appointments a ON d.id = a.doctor_id
-//       GROUP BY d.id
-//     `);
-
-//     res.status(200).json({ doctors });
-//   } catch (err) {
-//     console.error("Error fetching doctors:", err);
-//     res.status(500).json({ message: "Database error" });
-//   }
-// });
-
-
-// ✅ The correct route
-// router.get("/doctors", async (req, res) => {
-//   const [rows] = await pool.query(`
-//     SELECT d.id, d.name, COUNT(a.id) AS patientCount
-//     FROM doctors d
-//     LEFT JOIN appointments a ON d.id = a.doctor_id
-//     GROUP BY d.id
-//   `);
-
-//   res.status(200).json({ doctors: rows });
-// });
-
-
 // GET /api/doctors-with-patient-count
 // routes/appointments.js or routes/doctors.js
 router.get("/api/doctors-with-patient-count", async (req, res) => {
@@ -698,42 +668,10 @@ router.get("/api/doctors/:id/patient-count", async (req, res) => {
   }
 });
 
+router.post("/", authenticateToken, appointmentsController.createAppointment);
 
-
-// Get total patients for a specific doctor
-// router.get("/doctor/:id/patient-count", async (req, res) => {
-//   const doctorId = req.params.id;
-
-//   try {
-//     const [result] = await db.query(
-//       "SELECT COUNT(*) AS patientCount FROM appointments WHERE doctor_id = ?",
-//       [doctorId]
-//     );
-
-//     res.json({ doctorId, patientCount: result[0].patientCount });
-//   } catch (error) {
-//     console.error("Error fetching patient count:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// });
-
-// router.get("/doctors", async (req, res) => {
-//   try {
-//     const [rows] = await pool.query(`
-//       SELECT d.id, d.name, COUNT(a.id) AS patientCount
-//       FROM doctors d
-//       LEFT JOIN appointments a ON d.id = a.doctor_id
-//       GROUP BY d.id
-//     `);
-
-//     res.status(200).json({ doctors: rows });
-//   } catch (err) {
-//     console.error("Error fetching doctors with patient count:", err);
-//     res.status(500).json({ message: "Database error" });
-//   }
-// });
-
-     
+// Get logged-in user's appointments (My Bookings)
+router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
 
 module.exports = router;
 
