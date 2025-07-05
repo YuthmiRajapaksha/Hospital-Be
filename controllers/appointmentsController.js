@@ -357,6 +357,7 @@ exports.createAppointment = async (req, res) => {
     email,
     date,
     paymentId,
+    bookingformId,
   } = req.body;
 
   if (!doctorId) {
@@ -367,6 +368,9 @@ exports.createAppointment = async (req, res) => {
     return res.status(400).json({ error: "Missing session data" });
   }
 
+  if (!bookingformId) return res.status(400).json({ error: "Missing bookingform ID" });
+
+
   try {
     const userId = req.user?.id || null; // From JWT middleware
 
@@ -375,8 +379,8 @@ exports.createAppointment = async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO appointments (
         doctor_id, doctor_name, hospital, session_date, session_time,
-        patient_name, phone, country, nic, email, date, payment_id, user_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        patient_name, phone, country, nic, email, date, payment_id, user_id,bookingform_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
       [
         doctorId,
         doctorName,
@@ -391,8 +395,11 @@ exports.createAppointment = async (req, res) => {
         date,
         paymentId,
         userId,
+        bookingformId
       ]
     );
+
+  
 
     // Send confirmation email
     await emailService.sendAppointmentEmail({
@@ -542,3 +549,53 @@ exports.changeAppointmentStatus = async(req, res) => {
 //   countAppointments,
 // };
 
+
+
+exports.updateAppointment = async (req, res) => {
+  const { id } = req.params;
+  const { hospital, session_date, session_time } = req.body;
+
+  if (!hospital || !session_date || !session_time) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
+
+  try {
+    // 1️⃣ Update bookingForm
+    const [result] = await db.query(
+      'UPDATE bookingForm SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?',
+      [hospital, session_date, session_time, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "BookingForm not found" });
+    }
+
+    // 2️⃣ Update linked appointments to match new session
+    await db.query(
+      'UPDATE appointments SET hospital = ?, session_date = ?, session_time = ? WHERE bookingform_id = ?',
+      [hospital, session_date, session_time, id]
+    );
+
+    // 3️⃣ Find affected appointments & send update email to each patient
+    const [appointments] = await db.query(
+      'SELECT * FROM appointments WHERE bookingform_id = ?',
+      [id]
+    );
+
+    for (const appt of appointments) {
+      await emailService.sendAppointmentUpdateEmail({
+        patientName: appt.patient_name,
+        email: appt.email,
+        doctorName: appt.doctor_name,
+        hospital,
+        sessionDate: session_date,
+        sessionTime: session_time,
+      });
+    }
+
+    res.json({ message: "Session updated. Linked appointments updated. Emails sent!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error while updating session" });
+  }
+};

@@ -673,6 +673,8 @@ router.post("/", authenticateToken, appointmentsController.createAppointment);
 // Get logged-in user's appointments (My Bookings)
 router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
 
+
+
 module.exports = router;
 
 
