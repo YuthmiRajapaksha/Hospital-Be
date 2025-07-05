@@ -57,6 +57,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // After other routes
 app.use("/api/appointments", appointmentsRoutes);
+
 app.use("/", appointmentsRoutes);
 
 // app.use("/api/create-payment-intent", createPaymentIntent);
