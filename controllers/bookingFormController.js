@@ -2,6 +2,7 @@
 
 // controllers/bookingFormController.js
 const db = require('../config/db');
+const emailService = require("../utils/emailService");
 
 // Save multiple appointment sessions
 exports.saveMultipleSessions = async (req, res) => {
@@ -62,6 +63,72 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
+//working
+// Update an appointment by ID
+// exports.updateAppointment = async (req, res) => {
+//   const { id } = req.params;
+//   const { hospital, session_date, session_time } = req.body;
+
+//   if (!hospital || !session_date || !session_time) {
+//     return res.status(400).json({ message: "Missing fields: hospital, session_date, and session_time are required" });
+//   }
+
+//   try {
+//     const [result] = await db.query(
+//       'UPDATE bookingForm SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?',
+//       [hospital, session_date, session_time, id]
+//     );
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).json({ message: "Appointment not found" });
+//     }
+
+//     console.log(`✅ Updated bookingForm ID #${id}`);
+
+//     // 2️⃣ Get all related appointments with this bookingForm ID
+//     const [appointments] = await db.query(
+//       `SELECT * FROM appointments WHERE bookingform_id = ?`,
+//       [id]
+//     );
+
+//     if (appointments.length === 0) {
+//       console.log("ℹ️ No appointments linked, nothing to notify.");
+//       return res.json({
+//         message: "BookingForm updated. No linked appointments to notify.",
+//       });
+//     }
+
+//     // 3️⃣ Send emails to each patient
+//    for (const appt of appointments) {
+//   await emailService.sendAppointmentUpdateEmail({
+//     patientName: appt.patient_name,
+//     email: appt.email,
+//     doctorName: appt.doctor_name,
+//     hospital,
+//     sessionDate: session_date,
+//     sessionTime: session_time,
+//   });
+//   console.log(`📧 Sent update email to ${appt.email}`);
+// }
+
+//     res.json({
+//       message: `BookingForm updated. Notified ${appointments.length} patients.`,
+//     });
+//   } catch (err) {
+//     console.error("Error updating bookingForm:", err);
+//     res.status(500).json({ message: "Error updating bookingForm" });
+//   }
+// };
+
+
+//     res.json({ message: 'Appointment updated successfully' });
+//   } catch (err) {
+//     console.error('Error updating appointment:', err);
+//     res.status(500).json({ message: 'Error updating appointment' });
+//   }
+// };
+
+
 // Update an appointment by ID
 exports.updateAppointment = async (req, res) => {
   const { id } = req.params;
@@ -72,6 +139,7 @@ exports.updateAppointment = async (req, res) => {
   }
 
   try {
+    // 1️⃣ Update bookingForm
     const [result] = await db.query(
       'UPDATE bookingForm SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?',
       [hospital, session_date, session_time, id]
@@ -81,12 +149,50 @@ exports.updateAppointment = async (req, res) => {
       return res.status(404).json({ message: "Appointment not found" });
     }
 
-    res.json({ message: 'Appointment updated successfully' });
+    console.log(`✅ Updated bookingForm ID #${id}`);
+
+    // 2️⃣ Get all related appointments
+    const [appointments] = await db.query(
+      `SELECT * FROM appointments WHERE bookingform_id = ?`,
+      [id]
+    );
+
+    if (appointments.length === 0) {
+      console.log("ℹ️ No appointments linked, nothing to notify.");
+      return res.json({
+        message: "BookingForm updated. No linked appointments to notify.",
+      });
+    }
+
+    // ✅ 3️⃣ Update all linked appointments too!
+    await db.query(
+      `UPDATE appointments SET hospital = ?, session_date = ?, session_time = ? WHERE bookingform_id = ?`,
+      [hospital, session_date, session_time, id]
+    );
+    console.log(`✅ Updated ${appointments.length} linked appointments`);
+
+    // ✅ 4️⃣ Send emails to patients
+    for (const appt of appointments) {
+      await emailService.sendAppointmentUpdateEmail({
+        patientName: appt.patient_name,
+        email: appt.email,
+        doctorName: appt.doctor_name,
+        hospital,
+        sessionDate: session_date,
+        sessionTime: session_time,
+      });
+      console.log(`📧 Sent update email to ${appt.email}`);
+    }
+
+    res.json({
+      message: `BookingForm & appointments updated. Notified ${appointments.length} patients.`,
+    });
   } catch (err) {
-    console.error('Error updating appointment:', err);
-    res.status(500).json({ message: 'Error updating appointment' });
+    console.error("Error updating bookingForm:", err);
+    res.status(500).json({ message: "Error updating bookingForm" });
   }
 };
+
 
 // Delete an appointment by ID
 exports.deleteAppointment = async (req, res) => {

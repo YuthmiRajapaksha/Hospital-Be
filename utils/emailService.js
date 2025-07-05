@@ -439,3 +439,36 @@ exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
     }
   });
 };
+
+
+// ✅ NEW: dedicated update email
+exports.sendAppointmentUpdateEmail = async ({
+  patientName,
+  email,
+  doctorName,
+  hospital,
+  sessionDate,
+  sessionTime,
+}) => {
+  const subject = "Update: Your Appointment Details Changed";
+
+  const html = `
+    <p>Dear ${patientName},</p>
+    <p>This is to inform you that your appointment session details have been updated. Please see the new details below:</p>
+    <ul>
+      <li><strong>Doctor:</strong> Dr. ${doctorName}</li>
+      <li><strong>Hospital:</strong> ${hospital}</li>
+      <li><strong>New Date:</strong> ${sessionDate}</li>
+      <li><strong>New Time:</strong> ${sessionTime}</li>
+    </ul>
+    <p>Please contact us if you have any questions.</p>
+    <p>Thank you for your understanding.</p>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject,
+    html,
+  });
+};

@@ -108,6 +108,7 @@ async function setupDatabase() {
   { name: "session_time", type: "TIME NOT NULL" },
   { name: "doctor_name", type: "VARCHAR(100) NOT NULL" },
   { name: "status", type: "VARCHAR(20) DEFAULT 'active'" },
+  { name: "bookingform_id", type: "INT NULL" },
     ];
 
     for (const { name, type } of columnsToAdd) {
@@ -143,10 +144,28 @@ if (fkRows[0].count === 0) {
 } else {
   console.log("ℹ️ Foreign key for 'user_id' already exists.");
 }
-//     await pool.query(`
-//   ALTER TABLE appointments ADD COLUMN payment_id VARCHAR(100) DEFAULT NULL;
-// `);
-// console.log(`✅ Added column 'payment_id' to appointments.`);
+
+// Check if foreign key for bookingform_id exists
+const [fkBookingformRows] = await pool.query(`
+  SELECT COUNT(*) AS count
+  FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'appointments'
+    AND COLUMN_NAME = 'bookingform_id'
+    AND REFERENCED_TABLE_NAME = 'bookingform';
+`);
+
+if (fkBookingformRows[0].count === 0) {
+  await pool.query(`
+    ALTER TABLE appointments 
+    ADD CONSTRAINT fk_bookingform_id 
+    FOREIGN KEY (bookingform_id) REFERENCES bookingform(id) ON DELETE SET NULL;
+  `);
+  console.log("✅ Foreign key for 'bookingform_id' added.");
+} else {
+  console.log("ℹ️ Foreign key for 'bookingform_id' already exists.");
+}
+
 
 
     // BOOKING FORM TABLE
