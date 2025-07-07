@@ -155,7 +155,16 @@ exports.login = async (req, res) => {
     const [rows] = await db.query("SELECT * FROM doctors WHERE userName = ?", [username]);
     const doctor = rows[0];
 
-    if (!doctor || doctor.password !== password) {
+    // if (!doctor || doctor.password !== password) {
+    //   return res.status(401).json({ message: "Invalid credentials" });
+    // }
+
+    if (!doctor) {
+  return res.status(401).json({ message: "Invalid credentials" });
+}
+
+    const isMatch = await bcrypt.compare(password, doctor.password);
+    if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
