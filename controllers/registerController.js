@@ -47,6 +47,7 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = 'my_super_secret_123';
 
+//user register
 exports.registerUser = async (req, res) => {
   const {
     country,
@@ -90,6 +91,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+//user login
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 
