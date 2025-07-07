@@ -61,7 +61,6 @@
 
 
 
-// module.exports = router;
 
 const express = require("express");
 const router = express.Router();
@@ -69,14 +68,14 @@ const doctorController = require("../controllers/doctorController");
 const multer = require("multer");
 const authenticateToken = require("../middleware/authenticateToken");
 
-// ➜ Multer config for photo uploads
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 const upload = multer({ storage });
 
-// ➜ Routes
+
 router.post("/add", upload.single("photo"), doctorController.addDoctor);
 router.get("/", doctorController.getDoctors);
 router.get("/:id", doctorController.getDoctorById);

@@ -240,7 +240,7 @@
 const pool = require("../config/db");
 const emailService = require("../utils/emailService");
 
-// Create a new appointment
+
 exports.createAppointment = async (req, res) => {
   const {
     doctorId,
@@ -269,7 +269,7 @@ exports.createAppointment = async (req, res) => {
   if (!bookingformId) return res.status(400).json({ error: "Missing bookingform ID" });
 
   try {
-    const userId = req.user?.id || null; // From JWT middleware
+    const userId = req.user?.id || null; 
 
     const [result] = await pool.query(
       `INSERT INTO appointments (
@@ -294,7 +294,7 @@ exports.createAppointment = async (req, res) => {
       ]
     );
 
-    // Send confirmation email
+   
     await emailService.sendAppointmentEmail({
       patientName,
       email,
@@ -315,7 +315,7 @@ exports.createAppointment = async (req, res) => {
   }
 };
 
-// Change appointment status (e.g., cancel)
+
 exports.changeAppointmentStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -326,7 +326,7 @@ exports.changeAppointmentStatus = async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM appointments WHERE id = ?", [id]);
     const appointment = rows[0];
 
-    // Send cancellation email if status changed to cancelled
+    
     if (status === "cancelled") {
       await emailService.sendCancellationEmail({
         patientName: appointment.patient_name,
@@ -348,7 +348,7 @@ exports.changeAppointmentStatus = async (req, res) => {
   }
 };
 
-// Update appointment details (patient info)
+
 exports.updateAppointmentDetails = async (req, res) => {
   const id = req.params.id;
   const { patient_name, phone, nic, email } = req.body;
@@ -370,7 +370,7 @@ exports.updateAppointmentDetails = async (req, res) => {
   }
 };
 
-// Get cancelled appointments for a doctor
+
 exports.getCancelledAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
 
@@ -386,7 +386,7 @@ exports.getCancelledAppointmentsByDoctor = async (req, res) => {
   }
 };
 
-// Count appointments for a doctor in a session
+
 exports.countAppointments = async (req, res) => {
   const doctorId = req.params.doctorId;
   const { hospital, sessionDate, sessionTime } = req.query;
@@ -409,7 +409,7 @@ exports.countAppointments = async (req, res) => {
   }
 };
 
-// Get appointments by doctor id
+
 exports.getAppointmentsByDoctorId = async (req, res) => {
   const { doctorId } = req.params;
 
@@ -426,7 +426,7 @@ exports.getAppointmentsByDoctorId = async (req, res) => {
   }
 };
 
-// Get logged-in user's appointments (My Bookings)
+
 exports.getMyAppointments = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -457,7 +457,7 @@ exports.getMyAppointments = async (req, res) => {
   }
 };
 
-// Get doctor by id
+
 exports.getDoctorById = async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM doctors WHERE id = ?", [req.params.id]);
@@ -472,7 +472,7 @@ exports.getDoctorById = async (req, res) => {
   }
 };
 
-// Get all doctors with patient count
+
 exports.getAllDoctorsWithPatientCount = async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -515,7 +515,7 @@ exports.getAllDoctorsWithPatientCountAndRevenue = async (req, res) => {
   }
 };
 
-// Get patient count for a specific doctor
+
 exports.getPatientCountByDoctor = async (req, res) => {
   const doctorId = req.params.id;
 
@@ -533,7 +533,6 @@ exports.getPatientCountByDoctor = async (req, res) => {
 };
 
 
-// ✅ Get total appointments count
 exports.getTotalAppointmentsCount = async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT COUNT(*) AS count FROM appointments");
@@ -545,10 +544,10 @@ exports.getTotalAppointmentsCount = async (req, res) => {
 };
 
 
-// ✅ Count today's appointments
+
 exports.getTodayAppointmentsCount = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0]; 
 
     const [rows] = await pool.query(
       "SELECT COUNT(*) AS count FROM appointments WHERE DATE(created_at) = ?",

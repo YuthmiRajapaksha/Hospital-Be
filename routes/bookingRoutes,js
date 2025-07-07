@@ -23,7 +23,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
-// Get all appointments by doctorId
+
 router.get("/:doctorId", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -36,7 +36,7 @@ router.get("/:doctorId", async (req, res) => {
   }
 });
 
-// Update appointment session (by id)
+
 router.put("/:id", async (req, res) => {
   const { hospital, session_date, session_time } = req.body;
   try {
@@ -50,7 +50,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Delete appointment session (by id)
+
 router.delete("/:id", async (req, res) => {
   try {
     await pool.query("DELETE FROM bookingform WHERE id = ?", [req.params.id]);

@@ -25,25 +25,22 @@ const sessionRoutes = require("./routes/session");
 
 app.use(cors());
 app.use(bodyParser.json());
-// app.use(express.json()); // To parse incoming JSON requests
+
 
 const stripe = require('stripe')('your_secret_key');
 
 
 
-// Use the labReportsRoutes with a base path
 app.use("/api/lab-reports", labReportsRoutes);
 
-// Use the doctor routes
 app.use("/api/doctors", doctorRoutes);
 
-// Route to handle login
 app.use('/api/auth', authRoutes);
+
 app.use('/api/login', registerRoutes);
+
 app.use('/api/register', registerRoutes);
 
-
-// Protected route example
 app.get("/api/profile", authenticateToken, (req, res) => {
   res.json({ message: "This is your profile", user: req.user });
 });
@@ -52,32 +49,23 @@ app.use('/api', registerRoutes);
 
 app.use("/api/sessions", sessionRoutes);
 
-// Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// After other routes
 app.use("/api/appointments", appointmentsRoutes);
 
 app.use("/", appointmentsRoutes);
 
-// app.use("/api/create-payment-intent", createPaymentIntent);
 app.use("/api", createPaymentIntent);
 
-// Route for booking form
-app.use('/api/bookingForm', bookingFormRoutes); // ✅ Corrected line
+app.use('/api/bookingForm', bookingFormRoutes); 
 
 app.use("/api/doctors", doctorSearchRoutes);
+
 app.use("/api/bookingform", doctorSearchRoutes);
 
-// app.use("/api/appointments", appointmentsRoutes);
 
 app.use("/api/create-payment-intent", createPaymentIntent);
 
-
-
-
-
-// YOUR SEARCH ROUTE
 app.get("/api/search", async (req, res) => {
   const { doctor, specialization, hospital, date } = req.query;
 
@@ -106,7 +94,7 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
-// Example: get all appointments with doctor info
+
 app.get('/api/doctor-appointments', (req, res) => {
   const query = `
     SELECT a.id, a.date, a.patient_name, a.phone, a.country, a.nic, a.email, d.name AS doctor_name, d.specialization
@@ -124,24 +112,24 @@ app.get('/api/doctor-appointments', (req, res) => {
   });
 });
 
-// Route to create payment intent
-app.post("/api/create-payment-intent", async (req, res) => {
-  const { amount } = req.body;
 
-  if (!amount || typeof amount !== "number") {
-    return res.status(400).send({ error: "Invalid amount" });
-  }
+// app.post("/api/create-payment-intent", async (req, res) => {
+//   const { amount } = req.body;
 
-  try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: "usd",
-    });
-    res.send({ clientSecret: paymentIntent.client_secret });
-  } catch (err) {
-    res.status(500).send({ error: err.message });
-  }
-});
+//   if (!amount || typeof amount !== "number") {
+//     return res.status(400).send({ error: "Invalid amount" });
+//   }
+
+//   try {
+//     const paymentIntent = await stripe.paymentIntents.create({
+//       amount,
+//       currency: "usd",
+//     });
+//     res.send({ clientSecret: paymentIntent.client_secret });
+//   } catch (err) {
+//     res.status(500).send({ error: err.message });
+//   }
+// });
 
 
 app.listen(3000, () => {

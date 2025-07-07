@@ -128,6 +128,6 @@ const router = express.Router();
 const { searchDoctors } = require("../controllers/doctorSearchController");
 
 router.get("/search", searchDoctors);
-// router.get("/search", searchBookings);
+
 
 module.exports = router;

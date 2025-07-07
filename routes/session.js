@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../config/db"); // your mysql2 promise-based pool
+const pool = require("../config/db"); 
 
-// Get available sessions for a doctor
+
 router.get("/:doctorId", async (req, res) => {
   const { doctorId } = req.params;
-  const MAX_BOOKINGS = 5; // Set max bookings per session
+  const MAX_BOOKINGS = 5; 
 
   try {
     const [sessions] = await pool.query(

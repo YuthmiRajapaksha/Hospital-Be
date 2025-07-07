@@ -135,16 +135,16 @@ const router = express.Router();
 const authController = require("../controllers/authController");
 const authenticateToken = require("../middleware/authenticateToken");
 
-// === ✅ Doctor & Admin login ===
+
 router.post("/login", authController.login);
 
-// === ✅ Site User register ===
+
 router.post("/register", authController.registerUser);
 
-// === ✅ Site User login ===
+
 router.post("/user-login", authController.loginUser);
 
-// ✅ Example protected route to test JWT
+
 router.get("/protected", authenticateToken, (req, res) => {
   res.json({ message: "Protected route accessed", user: req.user });
 });

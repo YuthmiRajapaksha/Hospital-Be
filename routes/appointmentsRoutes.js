@@ -166,10 +166,10 @@ const router = express.Router();
 const appointmentsController = require("../controllers/appointmentsController");
 const authenticateToken = require("../middleware/authenticateToken");
 
-// Create appointment (protected)
+// Create appointment 
 router.post("/", authenticateToken, appointmentsController.createAppointment);
 
-// Change appointment status (protected)
+// Change appointment status 
 router.put("/appointments/:id/status", authenticateToken, appointmentsController.changeAppointmentStatus);
 
 // Update appointment details
