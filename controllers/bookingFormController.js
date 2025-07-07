@@ -1,10 +1,8 @@
 
-
-// controllers/bookingFormController.js
 const db = require('../config/db');
 const emailService = require("../utils/emailService");
 
-// Save multiple appointment sessions
+
 exports.saveMultipleSessions = async (req, res) => {
   const { doctorId, sessions } = req.body;
 
@@ -13,7 +11,7 @@ exports.saveMultipleSessions = async (req, res) => {
   }
 
   try {
-    // Filter out invalid sessions (hospital, date, time must be valid and time not "--:--")
+    
     const validSessions = sessions.filter(
       session => session.hospital && session.date && session.time && session.time !== "--:--"
     );
@@ -22,7 +20,7 @@ exports.saveMultipleSessions = async (req, res) => {
       return res.status(400).json({ message: "No valid session entries provided" });
     }
 
-    // Insert all valid sessions concurrently
+    
     await Promise.all(
       validSessions.map(({ hospital, date, time }) => {
         return db.query(
@@ -39,7 +37,7 @@ exports.saveMultipleSessions = async (req, res) => {
   }
 };
 
-// Get appointments for a specific doctor
+
 exports.getAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
 
@@ -129,7 +127,6 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 // };
 
 
-// Update an appointment by ID
 exports.updateAppointment = async (req, res) => {
   const { id } = req.params;
   const { hospital, session_date, session_time } = req.body;
@@ -139,7 +136,7 @@ exports.updateAppointment = async (req, res) => {
   }
 
   try {
-    // 1️⃣ Update bookingForm
+  
     const [result] = await db.query(
       'UPDATE bookingForm SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?',
       [hospital, session_date, session_time, id]
@@ -151,7 +148,7 @@ exports.updateAppointment = async (req, res) => {
 
     console.log(`✅ Updated bookingForm ID #${id}`);
 
-    // 2️⃣ Get all related appointments
+    
     const [appointments] = await db.query(
       `SELECT * FROM appointments WHERE bookingform_id = ?`,
       [id]
@@ -164,14 +161,14 @@ exports.updateAppointment = async (req, res) => {
       });
     }
 
-    // ✅ 3️⃣ Update all linked appointments too!
+
     await db.query(
       `UPDATE appointments SET hospital = ?, session_date = ?, session_time = ? WHERE bookingform_id = ?`,
       [hospital, session_date, session_time, id]
     );
     console.log(`✅ Updated ${appointments.length} linked appointments`);
 
-    // ✅ 4️⃣ Send emails to patients
+    
     for (const appt of appointments) {
       await emailService.sendAppointmentUpdateEmail({
         patientName: appt.patient_name,
@@ -194,7 +191,7 @@ exports.updateAppointment = async (req, res) => {
 };
 
 
-// Delete an appointment by ID
+
 exports.deleteAppointment = async (req, res) => {
   const { id } = req.params;
 

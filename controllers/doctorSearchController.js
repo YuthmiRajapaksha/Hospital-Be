@@ -296,7 +296,7 @@
 
 const db = require("../config/db");
 
-const searchDoctors = async (req, res) => {
+exports.searchDoctors = async (req, res) => {
   try {
     const { doctorId, hospital, session_date, specialization, doctor_name } = req.query;
 
@@ -342,7 +342,4 @@ const searchDoctors = async (req, res) => {
   }
 };
 
-module.exports = {
-  searchDoctors,
-};
 

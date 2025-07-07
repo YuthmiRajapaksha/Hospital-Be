@@ -136,7 +136,7 @@ const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-// Doctor + Admin Login
+//Dashboard
 exports.login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -144,20 +144,18 @@ exports.login = async (req, res) => {
     return res.status(400).json({ message: "Username and password required" });
   }
 
-  // Admin (hardcoded)
+ 
   if (username === "admin" && password === "1234") {
     const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "1h" });
     return res.json({ success: true, role: "admin", token, message: "Admin login successful" });
   }
 
-  // Doctor (from DB)
+ 
   try {
     const [rows] = await db.query("SELECT * FROM doctors WHERE userName = ?", [username]);
     const doctor = rows[0];
 
-    // if (!doctor || doctor.password !== password) {
-    //   return res.status(401).json({ message: "Invalid credentials" });
-    // }
+    
 
     if (!doctor) {
   return res.status(401).json({ message: "Invalid credentials" });
@@ -188,7 +186,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// Site User Register
+
 exports.registerUser = async (req, res) => {
   const { country, phone, email, title, firstName, lastName, idType, nicOrPassport, password } = req.body;
 
@@ -221,7 +219,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// Site User Login
+
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 

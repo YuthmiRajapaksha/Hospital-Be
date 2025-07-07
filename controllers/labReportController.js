@@ -115,11 +115,11 @@
 // };
 
 
-// controllers/labReportController.js
+
 
 const db = require("../config/db");
 
-// Get all lab reports
+
 exports.getAllReports = async (req, res) => {
   try {
     const [results] = await db.query("SELECT * FROM lab_reports ORDER BY id DESC");
@@ -130,7 +130,7 @@ exports.getAllReports = async (req, res) => {
   }
 };
 
-// Add a new lab report
+
 exports.addLabReport = async (req, res) => {
   let { reference_number, patient_name, test_name, report_date, status } = req.body;
 
@@ -155,7 +155,7 @@ exports.addLabReport = async (req, res) => {
   }
 };
 
-// Update an existing lab report
+
 exports.updateLabReport = async (req, res) => {
   const { id } = req.params;
   const { reference_number, patient_name, test_name, report_date, status } = req.body;
@@ -177,7 +177,7 @@ exports.updateLabReport = async (req, res) => {
   }
 };
 
-// Delete a lab report
+
 exports.deleteLabReport = async (req, res) => {
   const { id } = req.params;
 
@@ -195,7 +195,7 @@ exports.deleteLabReport = async (req, res) => {
   }
 };
 
-// Check report status
+
 exports.checkLabReportStatus = async (req, res) => {
   const { referenceNumber } = req.params;
 
@@ -216,7 +216,7 @@ exports.checkLabReportStatus = async (req, res) => {
   }
 };
 
-// Get today’s lab reports count
+
 exports.getTodayLabReportsCount = async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -229,7 +229,7 @@ exports.getTodayLabReportsCount = async (req, res) => {
   }
 };
 
-// Get total lab reports count
+
 exports.getLabReportsTotalCount = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT COUNT(*) AS count FROM lab_reports");

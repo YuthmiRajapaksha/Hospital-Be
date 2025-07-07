@@ -16,7 +16,7 @@ router.put('/:id', bookingFormController.updateAppointment);
 router.delete('/:id', bookingFormController.deleteAppointment);
 
 
-// Get available sessions for a doctor
+
 router.get("/sessions/:doctorId", async (req, res) => {
   const doctorId = req.params.doctorId;
 

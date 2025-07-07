@@ -61,7 +61,7 @@ exports.registerUser = async (req, res) => {
   } = req.body;
 
   try {
-    // Check for existing email or NIC
+   
     const [existing] = await db.query(
       "SELECT * FROM users WHERE email = ? OR nic_or_passport = ?",
       [email, nicOrPassport]
@@ -71,10 +71,10 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: "Email or NIC/Passport already exists" });
     }
 
-    // Hash password
+    
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into database
+    
     await db.query(
       `INSERT INTO users 
        (country, phone, email, title, first_name, last_name, id_type, nic_or_passport, password)
