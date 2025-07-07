@@ -213,8 +213,9 @@
 
 const pool = require("../config/db");
 const emailService = require("../utils/emailService");
+const bcrypt = require("bcrypt");
 
-// ➜ Add new doctor & send credentials email
+
 exports.addDoctor = async (req, res) => {
   const {
     name,
@@ -237,6 +238,10 @@ exports.addDoctor = async (req, res) => {
   }
 
   try {
+
+     
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const [result] = await pool.query(
       `INSERT INTO doctors 
         (name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photo)
@@ -250,7 +255,7 @@ exports.addDoctor = async (req, res) => {
         email,
         contactNumber || null,
         userName,
-        password,
+         hashedPassword, 
         photo,
       ]
     );
@@ -272,7 +277,7 @@ exports.addDoctor = async (req, res) => {
   }
 };
 
-// ➜ Get all doctors
+
 exports.getDoctors = async (req, res) => {
   try {
     const [results] = await pool.query("SELECT * FROM doctors");
@@ -283,7 +288,7 @@ exports.getDoctors = async (req, res) => {
   }
 };
 
-// ➜ Get single doctor by ID
+
 exports.getDoctorById = async (req, res) => {
   try {
     const [results] = await pool.query("SELECT * FROM doctors WHERE id = ?", [req.params.id]);
@@ -297,7 +302,7 @@ exports.getDoctorById = async (req, res) => {
   }
 };
 
-// ➜ Update doctor (including photo if provided)
+
 exports.updateDoctor = async (req, res) => {
   const { id } = req.params;
   const {
@@ -339,20 +344,37 @@ exports.updateDoctor = async (req, res) => {
 };
 
 // ➜ Delete doctor
+// exports.deleteDoctor = async (req, res) => {
+//   try {
+//     const [result] = await pool.query("DELETE FROM doctors WHERE id = ?", [req.params.id]);
+//     if (result.affectedRows === 0) {
+//       return res.status(404).json({ message: "Doctor not found" });
+//     }
+//     res.status(200).json({ message: "Doctor deleted successfully!" });
+//   } catch (err) {
+//     console.error("Error deleting doctor:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
+
 exports.deleteDoctor = async (req, res) => {
+  const doctorId = req.params.id;
+
   try {
-    const [result] = await pool.query("DELETE FROM doctors WHERE id = ?", [req.params.id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Doctor not found" });
-    }
-    res.status(200).json({ message: "Doctor deleted successfully!" });
+    //  all appointments for  doctor 
+    await pool.query("DELETE FROM appointments WHERE doctor_id = ?", [doctorId]);
+
+    // delete the doctor
+    await pool.query("DELETE FROM doctors WHERE id = ?", [doctorId]);
+
+    res.json({ message: "Doctor and all related appointments deleted successfully!" });
   } catch (err) {
     console.error("Error deleting doctor:", err);
-    res.status(500).json({ message: "Database error" });
+    res.status(500).json({ message: "Server error", error: err });
   }
 };
 
-// ➜ Change doctor password (only for logged-in doctor)
+
 exports.changeDoctorPassword = async (req, res) => {
   const doctorId = req.user?.id;
   const { currentPassword, newPassword } = req.body;

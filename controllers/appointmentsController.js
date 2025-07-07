@@ -436,7 +436,17 @@ exports.getMyAppointments = async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      `SELECT * FROM appointments WHERE user_id = ? ORDER BY created_at DESC`,
+    `SELECT 
+        a.*,
+        d.specialization
+      FROM 
+        appointments a
+      JOIN 
+        doctors d ON a.doctor_id = d.id
+      WHERE 
+        a.user_id = ?
+      ORDER BY 
+        a.created_at DESC`,
       [userId]
     );
 
