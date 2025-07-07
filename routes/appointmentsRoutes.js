@@ -203,6 +203,9 @@ router.get("/count-all", appointmentsController.getTotalAppointmentsCount);
 
 router.get("/count-today", appointmentsController.getTodayAppointmentsCount);
 
+//Get patients with revenue
+router.get("/api/doctors/:id/daily-stats", appointmentsController.getDailyStatsByDoctor);
+
 
 module.exports = router;
 

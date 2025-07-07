@@ -552,3 +552,25 @@ exports.getTodayAppointmentsCount = async (req, res) => {
   }
 };
 
+exports.getDailyStatsByDoctor = async (req, res) => {
+  const doctorId = req.params.id;
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        DATE(created_at) AS date,
+        COUNT(*) AS patientCount,
+        COUNT(*) * 2500 AS totalRevenue
+      FROM appointments
+      WHERE doctor_id = ?
+        AND DATE(created_at) >= CURDATE() - INTERVAL 30 DAY
+      GROUP BY DATE(created_at)
+      ORDER BY DATE(created_at) DESC
+    `, [doctorId]);
+
+    res.json({ dailyStats: rows });
+  } catch (error) {
+    console.error("Error fetching daily stats:", error);
+    res.status(500).json({ error: "Database error" });
+  }
+};
