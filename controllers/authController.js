@@ -186,7 +186,7 @@ exports.login = async (req, res) => {
   }
 };
 
-
+//user register
 exports.registerUser = async (req, res) => {
   const { country, phone, email, title, firstName, lastName, idType, nicOrPassport, password } = req.body;
 
@@ -219,7 +219,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-
+//user login
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
 

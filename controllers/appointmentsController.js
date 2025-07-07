@@ -398,7 +398,7 @@ exports.countAppointments = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT COUNT(*) AS count FROM appointments 
-       WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?`,
+       WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ? AND status != 'cancelled'`,
       [doctorId, hospital, sessionDate, sessionTime]
     );
 
@@ -445,6 +445,7 @@ exports.getMyAppointments = async (req, res) => {
         doctors d ON a.doctor_id = d.id
       WHERE 
         a.user_id = ?
+        
       ORDER BY 
         a.created_at DESC`,
       [userId]
@@ -505,6 +506,7 @@ exports.getAllDoctorsWithPatientCountAndRevenue = async (req, res) => {
         COUNT(a.id) * 2500 AS totalRevenue
       FROM doctors d
       LEFT JOIN appointments a ON d.id = a.doctor_id
+      AND a.status != 'cancelled'
       GROUP BY d.id
     `);
 
@@ -572,6 +574,7 @@ exports.getDailyStatsByDoctor = async (req, res) => {
         COUNT(*) * 2500 AS totalRevenue
       FROM appointments
       WHERE doctor_id = ?
+        AND status != 'cancelled'   
         AND DATE(created_at) >= CURDATE() - INTERVAL 30 DAY
       GROUP BY DATE(created_at)
       ORDER BY DATE(created_at) DESC
