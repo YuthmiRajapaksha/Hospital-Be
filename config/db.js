@@ -57,7 +57,7 @@ async function setupDatabase() {
         
         email VARCHAR(255),
         contactNumber VARCHAR(15),
-        userName VARCHAR(255) NOT NULL,
+        userName VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         photo VARCHAR(255)
       );
