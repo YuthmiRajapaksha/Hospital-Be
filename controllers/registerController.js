@@ -45,7 +45,7 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = 'my_super_secret_123';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 //user register
 exports.registerUser = async (req, res) => {
@@ -62,6 +62,15 @@ exports.registerUser = async (req, res) => {
   } = req.body;
 
   try {
+
+     let finalNIC = nicOrPassport.trim();
+
+    if (idType === "NIC") {
+      if (/^\d{9}$/.test(finalNIC)) {
+        finalNIC += "V";
+      }
+      finalNIC = finalNIC.toUpperCase();
+    }
    
     const [existing] = await db.query(
       "SELECT * FROM users WHERE email = ? OR nic_or_passport = ?",
@@ -90,6 +99,9 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ message: "Server error during registration" });
   }
 };
+
+
+
 
 //user login
 exports.loginUser = async (req, res) => {

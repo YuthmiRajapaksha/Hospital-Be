@@ -28,10 +28,10 @@ const pool = mysql.createPool({
 
 
   
-// Async function to run all table setups
+
 async function setupDatabase() {
   try {
-    // Test connection
+    
     await pool.getConnection();
     console.log('✅ Connected to hospital_db database.');
 
@@ -95,7 +95,7 @@ async function setupDatabase() {
     `);
     console.log('✅ Table "appointments" ensured.');
 
-    // ADD MISSING COLUMNS TO APPOINTMENTS
+    // ADD MISSING COLUMNS TO APPOINTMENTS TABLE
     const columnsToAdd = [
       { name: "user_id", type: "INT NULL" },
       { name: "phone", type: "VARCHAR(20) NOT NULL" },
@@ -186,7 +186,7 @@ if (fkBookingformRows[0].count === 0) {
   }
 }
 
-// Run the setup
+
 setupDatabase();
 
 module.exports = pool;
