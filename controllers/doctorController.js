@@ -400,47 +400,47 @@ exports.deleteDoctor = async (req, res) => {
 // };
 
 
-exports.changeDoctorPassword = async (req, res) => {
-  const doctorId = req.user?.id;
-  const { currentPassword, newPassword } = req.body;
+// exports.changeDoctorPassword = async (req, res) => {
+//   const doctorId = req.user?.id;
+//   const { currentPassword, newPassword } = req.body;
 
-  if (!doctorId) {
-    return res.status(401).json({ message: "Unauthorized: Missing doctor ID" });
-  }
+//   if (!doctorId) {
+//     return res.status(401).json({ message: "Unauthorized: Missing doctor ID" });
+//   }
 
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ message: "Both current and new password are required." });
-  }
+//   if (!currentPassword || !newPassword) {
+//     return res.status(400).json({ message: "Both current and new password are required." });
+//   }
 
-  try {
-    const [rows] = await pool.query(
-      "SELECT password FROM doctors WHERE id = ?",
-      [doctorId]
-    );
+//   try {
+//     const [rows] = await pool.query(
+//       "SELECT password FROM doctors WHERE id = ?",
+//       [doctorId]
+//     );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Doctor not found." });
-    }
+//     if (rows.length === 0) {
+//       return res.status(404).json({ message: "Doctor not found." });
+//     }
 
-    const storedHash = rows[0].password;
+//     const storedHash = rows[0].password;
 
-    const isMatch = await bcrypt.compare(currentPassword, storedHash);
+//     const isMatch = await bcrypt.compare(currentPassword, storedHash);
 
-    if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect." });
-    }
+//     if (!isMatch) {
+//       return res.status(400).json({ message: "Current password is incorrect." });
+//     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+//     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-    await pool.query(
-      "UPDATE doctors SET password = ? WHERE id = ?",
-      [hashedNewPassword, doctorId]
-    );
+//     await pool.query(
+//       "UPDATE doctors SET password = ? WHERE id = ?",
+//       [hashedNewPassword, doctorId]
+//     );
 
-    console.log(`Password updated for doctor ID: ${doctorId}`);
-    return res.json({ message: "Password updated successfully!" });
-  } catch (err) {
-    console.error("Error changing password:", err);
-    return res.status(500).json({ message: "Internal server error. Please try again." });
-  }
-};
+//     console.log(`Password updated for doctor ID: ${doctorId}`);
+//     return res.json({ message: "Password updated successfully!" });
+//   } catch (err) {
+//     console.error("Error changing password:", err);
+//     return res.status(500).json({ message: "Internal server error. Please try again." });
+//   }
+// };

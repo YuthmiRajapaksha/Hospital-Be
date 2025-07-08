@@ -495,7 +495,7 @@ exports.getAllDoctorsWithPatientCount = async (req, res) => {
   }
 };
 
-// Get all doctors with patient count and revenue
+
 exports.getAllDoctorsWithPatientCountAndRevenue = async (req, res) => {
   try {
     const [rows] = await pool.query(`

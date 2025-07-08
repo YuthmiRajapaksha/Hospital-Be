@@ -144,6 +144,8 @@ router.post("/register", authController.registerUser);
 
 router.post("/user-login", authController.loginUser);
 
+router.put("/change-password", authenticateToken, authController.changePassword);
+
 
 router.get("/protected", authenticateToken, (req, res) => {
   res.json({ message: "Protected route accessed", user: req.user });

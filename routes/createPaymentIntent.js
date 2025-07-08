@@ -1,4 +1,4 @@
-// routes/createPaymentIntent.js
+
 const express = require("express");
 const router = express.Router();
 const stripe = require("stripe")("sk_test_51RdD3U4E2Cgk4YHutBVKgOePC1zA2KmX9k4ydzD7uUEgnogZIRpypQ0bEWBMazXmLPdUXSbiBQZMkOl2MyQWC8VI0090RAH5fJ");

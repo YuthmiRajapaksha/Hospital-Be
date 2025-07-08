@@ -186,6 +186,7 @@ exports.login = async (req, res) => {
   }
 };
 
+
 //user register
 exports.registerUser = async (req, res) => {
   const { country, phone, email, title, firstName, lastName, idType, nicOrPassport, password } = req.body;
@@ -195,10 +196,20 @@ exports.registerUser = async (req, res) => {
   }
 
   try {
+
+ let finalNIC = nicOrPassport.trim();
+
+    if (idType === "NIC") {
+      if (/^\d{9}$/.test(finalNIC)) {
+        finalNIC += "V";
+      }
+      finalNIC = finalNIC.toUpperCase();
+    }
+
     const [existing] = await db.query(
-      "SELECT * FROM users WHERE email = ? OR nic_or_passport = ?",
-      [email, nicOrPassport]
-    );
+  "SELECT * FROM users WHERE email = ? OR nic_or_passport = ?",
+  [email, finalNIC]
+);
 
     if (existing.length > 0) {
       return res.status(400).json({ message: "Email or NIC/Passport already exists" });
@@ -218,6 +229,9 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
 
 //user login
 exports.loginUser = async (req, res) => {
@@ -255,6 +269,33 @@ exports.loginUser = async (req, res) => {
     });
   } catch (err) {
     console.error("User login error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+//doctor password change
+exports.changePassword = async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+
+  const { currentPassword, newPassword } = req.body;
+  const doctorId = req.user.id;
+
+  try {
+    const [rows] = await db.query("SELECT * FROM doctors WHERE id = ?", [doctorId]);
+    const doctor = rows[0];
+
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, doctor.password);
+    if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.query("UPDATE doctors SET password = ? WHERE id = ?", [hashedPassword, doctorId]);
+
+    res.json({ success: true, message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Password change error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

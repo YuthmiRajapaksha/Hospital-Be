@@ -29,8 +29,6 @@ app.use(bodyParser.json());
 
 const stripe = require('stripe')('your_secret_key');
 
-
-
 app.use("/api/lab-reports", labReportsRoutes);
 
 app.use("/api/doctors", doctorRoutes);
@@ -62,6 +60,8 @@ app.use('/api/bookingForm', bookingFormRoutes);
 app.use("/api/doctors", doctorSearchRoutes);
 
 app.use("/api/bookingform", doctorSearchRoutes);
+
+
 
 
 app.use("/api/create-payment-intent", createPaymentIntent);
@@ -113,23 +113,6 @@ app.get('/api/doctor-appointments', (req, res) => {
 });
 
 
-// app.post("/api/create-payment-intent", async (req, res) => {
-//   const { amount } = req.body;
-
-//   if (!amount || typeof amount !== "number") {
-//     return res.status(400).send({ error: "Invalid amount" });
-//   }
-
-//   try {
-//     const paymentIntent = await stripe.paymentIntents.create({
-//       amount,
-//       currency: "usd",
-//     });
-//     res.send({ clientSecret: paymentIntent.client_secret });
-//   } catch (err) {
-//     res.status(500).send({ error: err.message });
-//   }
-// });
 
 
 app.listen(3000, () => {
