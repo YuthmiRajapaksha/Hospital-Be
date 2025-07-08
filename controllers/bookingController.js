@@ -1,6 +1,6 @@
-// controllers/bookingController.js
 
-const pool = require("../db"); // adjust path if needed
+
+const pool = require("../db"); 
 
 // GET all bookings for a doctor
 exports.getBookingsByDoctor = async (req, res) => {
