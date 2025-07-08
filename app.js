@@ -4,14 +4,11 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const db = require('./config/db'); // Your MySQL DB connection
-const authRoutes = require('./routes/auth'); // The new login route
+const db = require('./config/db'); 
+const authRoutes = require('./routes/auth'); 
 const path = require('path');
 
 
-
-
-// Import routes
 const labReportsRoutes = require("./routes/labReportsRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const registerRoutes = require('./routes/registerRoutes');
