@@ -143,8 +143,9 @@ exports.loginUser = async (req, res) => {
 };
 
 
-//doctor password change
+// Doctor password change
 exports.changePassword = async (req, res) => {
+  console.log("req.user:", req.user);
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
   const { currentPassword, newPassword } = req.body;
