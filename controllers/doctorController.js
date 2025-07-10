@@ -28,7 +28,6 @@ exports.addDoctor = async (req, res) => {
 
   try {
 
-     
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query(

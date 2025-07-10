@@ -1,6 +1,3 @@
-
-
-
 const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -25,12 +22,12 @@ exports.login = async (req, res) => {
     const doctor = rows[0];
 
     
-
     if (!doctor) {
   return res.status(401).json({ message: "Invalid credentials" });
 }
 
     const isMatch = await bcrypt.compare(password, doctor.password);
+
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
