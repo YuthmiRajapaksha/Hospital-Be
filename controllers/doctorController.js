@@ -1,5 +1,5 @@
 
-const db = require ("../config/db")
+// const db = require ("../config/db")
 const pool = require("../config/db");
 const emailService = require("../utils/emailService");
 const bcrypt = require("bcrypt");
@@ -9,9 +9,9 @@ exports.addDoctor = async (req, res) => {
   const {
     name,
     specialization,
-    workExperience,
-    qualifications,
-    address,
+    // workExperience,
+    // qualifications,
+    // address,
     email,
     contactNumber,
     userName,
@@ -29,25 +29,20 @@ exports.addDoctor = async (req, res) => {
   try {
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const [result] = await pool.query(
-      `INSERT INTO doctors 
-        (name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        name,
-        specialization,
-        workExperience || null,
-        qualifications || null,
-        address || null,
-        email,
-        contactNumber || null,
-        userName,
-         hashedPassword, 
-        photo,
-      ]
-    );
-
+const [result] = await pool.query(
+  `INSERT INTO doctors 
+    (name, specialization, email, contactNumber, userName, password, photo)
+   VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  [
+    name,
+    specialization,
+    email,
+    contactNumber || null,
+    userName,
+    hashedPassword,
+    photo,
+  ]
+);
     await emailService.sendDoctorCredentials({
       name,
       email,
@@ -96,9 +91,7 @@ exports.updateDoctor = async (req, res) => {
   const {
     name,
     specialization,
-    workExperience,
-    qualifications,
-    address,
+    
     email,
     contactNumber,
     userName,
@@ -112,12 +105,12 @@ exports.updateDoctor = async (req, res) => {
   }
 
   const query = photo
-    ? `UPDATE doctors SET name=?, specialization=?, workExperience=?, qualifications=?, address=?, email=?, contactNumber=?, userName=?, password=?, photo=? WHERE id=?`
-    : `UPDATE doctors SET name=?, specialization=?, workExperience=?, qualifications=?, address=?, email=?, contactNumber=?, userName=?, password=? WHERE id=?`;
+    ? `UPDATE doctors SET name=?, specialization=?,  email=?, contactNumber=?, userName=?, password=?, photo=? WHERE id=?`
+    : `UPDATE doctors SET name=?, specialization=?,  email=?, contactNumber=?, userName=?, password=? WHERE id=?`;
 
   const values = photo
-    ? [name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, photo, id]
-    : [name, specialization, workExperience, qualifications, address, email, contactNumber, userName, password, id];
+    ? [name, specialization,  email, contactNumber, userName, password, photo, id]
+    : [name, specialization,  email, contactNumber, userName, password, id];
 
   try {
     const [result] = await pool.query(query, values);
@@ -158,7 +151,7 @@ exports.changePassword = async (req, res) => {
   const doctorId = req.user.id;
 
   try {
-    const [rows] = await db.query("SELECT * FROM doctors WHERE id = ?", [doctorId]);
+    const [rows] = await pool.query("SELECT * FROM doctors WHERE id = ?", [doctorId]);
     const doctor = rows[0];
 
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
@@ -167,7 +160,7 @@ exports.changePassword = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Current password is incorrect" });
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await db.query("UPDATE doctors SET password = ? WHERE id = ?", [hashedPassword, doctorId]);
+    await pool.query("UPDATE doctors SET password = ? WHERE id = ?", [hashedPassword, doctorId]);
 
     res.json({ success: true, message: "Password changed successfully" });
   } catch (err) {
