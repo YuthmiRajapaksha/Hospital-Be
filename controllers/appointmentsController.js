@@ -131,6 +131,7 @@ exports.getCancelledAppointmentsByDoctor = async (req, res) => {
     const [rows] = await pool.query(
       "SELECT * FROM appointments WHERE doctor_id = ? AND status = 'cancelled'",
       [doctorId]
+      
     );
     res.json(rows);
   } catch (err) {
@@ -303,7 +304,6 @@ exports.getTotalAppointmentsCount = async (req, res) => {
 
 exports.getTodayAppointmentsCount = async (req, res) => {
   // const { id } = req.params;  
-  // const { reason } = req.body;
   // const userId = req.user?.id;
   try {
     const today = new Date().toISOString().split('T')[0]; 
@@ -382,6 +382,36 @@ exports.getWeekAppointmentsCount = async (req, res) => {
 
 
 
+exports.cancelAppointmentByPatient = async (req, res) => {
+  const { id } = req.params;  // appointment ID
+  const userId = req.user?.id;
+
+  if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT * FROM appointments WHERE id = ? AND user_id = ? AND status = 'active'`,
+      [id, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Appointment not found or not active" });
+    }
+
+    await pool.query(
+      `UPDATE appointments 
+       SET status = 'cancelled' 
+       WHERE id = ? AND user_id = ?`,
+      [id, userId]
+    );
+
+    res.json({ message: "Appointment cancelled successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 

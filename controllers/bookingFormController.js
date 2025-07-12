@@ -32,10 +32,10 @@ exports.saveMultipleSessions = async (req, res) => {
       const newMins = hNew * 60 + mNew;
 
       for (const row of existing) {
-        const [hDb, mDb] = row.session_time.split(":").map(Number);
-        const dbMins = hDb * 60 + mDb;
+        const [hDb, mDb] = row.session_time.split(":").map(Number); //split into hours
+        const dbMins = hDb * 60 + mDb; // convert to total minutes
 
-        const diff = Math.abs(newMins - dbMins);
+        const diff = Math.abs(newMins - dbMins); // difference between sessions
 
         if (diff < 120) {
           return res.status(400).json({
