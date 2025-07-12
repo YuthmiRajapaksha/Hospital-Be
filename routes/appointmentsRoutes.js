@@ -45,6 +45,9 @@ router.get("/count-week", appointmentsController.getWeekAppointmentsCount);
 //Get patients with revenue
 router.get("/api/doctors/:id/daily-stats", appointmentsController.getDailyStatsByDoctor);
 
+// router.post("/cancelByPatient/:id", authenticateToken, appointmentsController.cancelAppointmentByPatient);
+
+
 
 module.exports = router;
 

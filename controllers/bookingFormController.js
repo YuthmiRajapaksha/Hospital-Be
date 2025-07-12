@@ -20,6 +20,30 @@ exports.saveMultipleSessions = async (req, res) => {
       return res.status(400).json({ message: "No valid session entries provided" });
     }
 
+
+    for (const { hospital, date, time } of validSessions) {
+      //  Get all existing sessions for same doctor/hospital/date
+      const [existing] = await db.query(
+        `SELECT session_time FROM bookingForm WHERE doctor_id = ? AND hospital = ? AND session_date = ?`,
+        [doctorId, hospital, date]
+      );
+
+      const [hNew, mNew] = time.split(":").map(Number);
+      const newMins = hNew * 60 + mNew;
+
+      for (const row of existing) {
+        const [hDb, mDb] = row.session_time.split(":").map(Number);
+        const dbMins = hDb * 60 + mDb;
+
+        const diff = Math.abs(newMins - dbMins);
+
+        if (diff < 120) {
+          return res.status(400).json({
+            message: `Already scheduled.`
+          });
+        }
+      }
+    }
     
     await Promise.all(
       validSessions.map(({ hospital, date, time }) => {

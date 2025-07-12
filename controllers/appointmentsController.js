@@ -33,6 +33,18 @@ exports.createAppointment = async (req, res) => {
   try {
     const userId = req.user?.id || null; 
 
+     //  Duplicate check
+    const [existing] = await pool.query(
+      `SELECT id FROM appointments 
+       WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?
+       AND patient_name = ? AND nic = ? AND status != 'cancelled'`,
+      [doctorId, hospital, sessionDate, sessionTime, patientName, nic]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ error: "You already have an active appointment for this time slot." });
+    }
+
     const [result] = await pool.query(
       `INSERT INTO appointments (
         doctor_id, doctor_name, hospital, session_date, session_time,
@@ -81,6 +93,7 @@ exports.createAppointment = async (req, res) => {
 exports.changeAppointmentStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+
 
   try {
     await pool.query("UPDATE appointments SET status = ? WHERE id = ?", [status, id]);
@@ -168,6 +181,7 @@ exports.getAppointmentsByDoctorId = async (req, res) => {
 
 
 exports.getMyAppointments = async (req, res) => {
+  
   try {
     const userId = req.user?.id;
 
@@ -288,6 +302,9 @@ exports.getTotalAppointmentsCount = async (req, res) => {
 
 
 exports.getTodayAppointmentsCount = async (req, res) => {
+  // const { id } = req.params;  
+  // const { reason } = req.body;
+  // const userId = req.user?.id;
   try {
     const today = new Date().toISOString().split('T')[0]; 
 
@@ -362,3 +379,10 @@ exports.getWeekAppointmentsCount = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+
+
+
+
