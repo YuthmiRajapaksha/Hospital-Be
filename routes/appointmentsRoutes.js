@@ -40,6 +40,8 @@ router.get("/count-all", appointmentsController.getTotalAppointmentsCount);
 
 router.get("/count-today", appointmentsController.getTodayAppointmentsCount);
 
+router.get("/count-week", appointmentsController.getWeekAppointmentsCount);
+
 //Get patients with revenue
 router.get("/api/doctors/:id/daily-stats", appointmentsController.getDailyStatsByDoctor);
 

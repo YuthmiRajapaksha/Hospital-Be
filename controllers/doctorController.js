@@ -28,6 +28,30 @@ exports.addDoctor = async (req, res) => {
 
   try {
 
+
+    //  Check duplicate email
+    const [existingEmail] = await pool.query(
+      "SELECT id FROM doctors WHERE email = ?",
+      [email]
+    );
+    if (existingEmail.length > 0) {
+      return res.status(409).json({
+        message: "Email already exists. Please use a different email.",
+      });
+    }
+
+    //  Check duplicate username
+    const [existingUsername] = await pool.query(
+      "SELECT id FROM doctors WHERE userName = ?",
+      [userName]
+    );
+    if (existingUsername.length > 0) {
+      return res.status(409).json({
+        message: "Username already exists. Please choose another username.",
+      });
+    }
+
+
     const hashedPassword = await bcrypt.hash(password, 10);
 const [result] = await pool.query(
   `INSERT INTO doctors 
