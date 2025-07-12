@@ -1,5 +1,6 @@
 
 const db = require("../config/db");
+const path = require('path');
 
 
 exports.getAllReports = async (req, res) => {
@@ -123,3 +124,27 @@ exports.getLabReportsTotalCount = async (req, res) => {
   }
 };
 
+
+exports.uploadLabReportFile = async (req, res) => {
+  const reportId = req.params.id;
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  
+  const fileUrl = `/uploads/${file.filename}`;
+
+  try {
+    await db.query(
+      `UPDATE lab_reports SET report_file_url = ? WHERE id = ?`,
+      [fileUrl, reportId]
+    );
+
+    res.json({ message: "Report uploaded successfully", url: fileUrl });
+  } catch (err) {
+    
+    res.status(500).json({ message: "Database error" });
+  }
+};
