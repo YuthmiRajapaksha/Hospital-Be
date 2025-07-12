@@ -13,7 +13,7 @@ const labReportsRoutes = require("./routes/labReportsRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const registerRoutes = require('./routes/registerRoutes');
 const appointmentsRoutes = require('./routes/appointmentsRoutes');
-const createPaymentIntent = require("./routes/createPaymentIntent");
+// const createPaymentIntent = require("./routes/createPaymentIntent");
 const bookingFormRoutes = require("./routes/bookingFormRoutes");
 const doctorSearchRoutes = require("./routes/doctorSearchRoutes");
 const authenticateToken =require ("./middleware/authenticateToken");
@@ -24,7 +24,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 
-const stripe = require('stripe')('your_secret_key');
+// const stripe = require('stripe')('your_secret_key');
 
 app.use("/api/lab-reports", labReportsRoutes);
 
@@ -50,7 +50,7 @@ app.use("/api/appointments", appointmentsRoutes);
 
 app.use("/", appointmentsRoutes);
 
-app.use("/api", createPaymentIntent);
+// app.use("/api", createPaymentIntent);
 
 app.use('/api/bookingForm', bookingFormRoutes); 
 
@@ -61,7 +61,7 @@ app.use("/api/bookingform", doctorSearchRoutes);
 
 
 
-app.use("/api/create-payment-intent", createPaymentIntent);
+// app.use("/api/create-payment-intent", createPaymentIntent);
 
 app.get("/api/search", async (req, res) => {
   const { doctor, specialization, hospital, date } = req.query;

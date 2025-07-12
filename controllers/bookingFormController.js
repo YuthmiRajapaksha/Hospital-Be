@@ -97,6 +97,41 @@ exports.updateAppointment = async (req, res) => {
   }
 
   try {
+
+     const [bookingForm] = await db.query(
+      'SELECT doctor_id FROM bookingForm WHERE id = ?',
+      [id]
+    );
+
+    if (bookingForm.length === 0) {
+      return res.status(404).json({ message: "BookingForm not found" });
+    }
+
+    const doctorId = bookingForm[0].doctor_id;
+
+    // Get other sessions for same doctor/hospital/date, excluding this one
+    const [existing] = await db.query(
+      `SELECT session_time FROM bookingForm 
+       WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND id != ?`,
+      [doctorId, hospital, session_date, id]
+    );
+
+    // Check for overlaps
+    const [hNew, mNew] = session_time.split(":").map(Number);
+    const newMins = hNew * 60 + mNew;
+
+    for (const row of existing) {
+      const [hDb, mDb] = row.session_time.split(":").map(Number);
+      const dbMins = hDb * 60 + mDb;
+
+      const diff = Math.abs(newMins - dbMins);
+
+      if (diff < 120) {
+        return res.status(400).json({
+          message: `This session overlaps with an existing one for this doctor. Must be at least 2 hours apart.`
+        });
+      }
+    }
    
     const [result] = await db.query(
       'UPDATE bookingForm SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?',
