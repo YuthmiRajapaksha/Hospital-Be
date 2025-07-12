@@ -326,3 +326,39 @@ exports.getDailyStatsByDoctor = async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 };
+
+
+
+exports.getWeekAppointmentsCount = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        DATE(created_at) AS date,
+        COUNT(*) AS count
+      FROM appointments
+      WHERE created_at >= CURDATE() - INTERVAL 6 DAY
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `);
+
+    // Fill missing days with zero
+    const result = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      const found = rows.find(r => r.date === dateStr);
+      result.push({
+        date: dateStr,
+        count: found ? found.count : 0,
+      });
+    }
+
+    res.json(result);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
