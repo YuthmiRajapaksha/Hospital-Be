@@ -142,6 +142,7 @@ exports.updateAppointment = async (req, res) => {
       return res.status(404).json({ message: "BookingForm not found" });
     }
 
+
    
     const [appointments] = await db.query(
       `SELECT * FROM appointments WHERE bookingform_id = ? AND status = 'active'`,
@@ -154,6 +155,7 @@ exports.updateAppointment = async (req, res) => {
       });
     }
 
+    
    
     await db.query(
       `UPDATE appointments SET hospital = ?, session_date = ?, session_time = ? WHERE bookingform_id = ? AND status = 'active'`,
@@ -187,6 +189,9 @@ exports.deleteAppointment = async (req, res) => {
   const { id } = req.params;
 
   try {
+
+
+
     const [result] = await db.query('DELETE FROM bookingForm WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {

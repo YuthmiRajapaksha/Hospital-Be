@@ -229,26 +229,26 @@ exports.getDoctorById = async (req, res) => {
 };
 
 
-exports.getAllDoctorsWithPatientCount = async (req, res) => {
-  try {
-    const [rows] = await pool.query(`
-      SELECT d.id, d.name, COUNT(a.id) AS patientCount 
-      FROM doctors d 
-      LEFT JOIN appointments a ON d.id = a.doctor_id 
-      GROUP BY d.id;
-    `);
+// exports.getAllDoctorsWithPatientCount = async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(`
+//       SELECT d.id, d.name, COUNT(a.id) AS patientCount 
+//       FROM doctors d 
+//       LEFT JOIN appointments a ON d.id = a.doctor_id 
+//       GROUP BY d.id;
+//     `);
 
-    const doctors = rows.map(row => ({
-      ...row,
-      patientCount: Number(row.patientCount) || 0,
-    }));
+//     const doctors = rows.map(row => ({
+//       ...row,
+//       patientCount: Number(row.patientCount) || 0,
+//     }));
 
-    res.status(200).json({ doctors });
-  } catch (err) {
-    console.error("Error fetching doctors:", err);
-    res.status(500).json({ message: "Database error" });
-  }
-};
+//     res.status(200).json({ doctors });
+//   } catch (err) {
+//     console.error("Error fetching doctors:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
 
 
 exports.getAllDoctorsWithPatientCountAndRevenue = async (req, res) => {
@@ -414,5 +414,46 @@ exports.cancelAppointmentByPatient = async (req, res) => {
 };
 
 
+// controllers/appointmentsController.js
+
+// exports.getAllDoctorsWithPatientCount = async (req, res) => {
+//   try {
+//     const [doctors] = await pool.query(`
+//       SELECT d.id, d.name, d.specialization, d.hospital, COUNT(a.id) as totalAppointments
+//       FROM doctors d
+//       LEFT JOIN appointments a ON a.doctor_id = d.id
+//       GROUP BY d.id
+//     `);
+
+//     res.json({ doctors });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Error fetching doctors" });
+//   }
+// };
+
+// ✅ Final version: count active (non-cancelled) appointments per doctor
+exports.getAllDoctorsWithPatientCount = async (req, res) => {
+  try {
+    const [doctors] = await pool.query(`
+      SELECT 
+        d.id, 
+        d.name, 
+        d.specialization, 
+        d.hospital, 
+        COUNT(a.id) AS totalAppointments
+      FROM doctors d
+      LEFT JOIN appointments a 
+        ON a.doctor_id = d.id 
+        AND a.status != 'cancelled'
+      GROUP BY d.id
+    `);
+
+    res.json({ doctors });
+  } catch (err) {
+    console.error("Error fetching doctors:", err);
+    res.status(500).json({ message: "Error fetching doctors" });
+  }
+};
 
 

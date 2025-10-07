@@ -28,7 +28,8 @@ exports.sendAppointmentEmail = async ({
   phone,
   country,
   nic,
-  charge
+  charge,
+  appointmentNumber // added
 }) => {
   const mailOptions = {
     from: 'nirajapaksha1998@gmail.com',
@@ -98,6 +99,7 @@ exports.sendAppointmentEmail = async ({
           <div class="content">
             <h2>Confirm Your Booking Details</h2>
             <div class="details">
+            <p><strong>Appointment Number:</strong> ${appointmentNumber}</p>
               <p><strong>Doctor:</strong> ${doctorName}</p>
               <p><strong>Hospital:</strong> ${hospital}</p>
               <p><strong>Session Date:</strong> ${sessionDate}</p>
@@ -312,3 +314,26 @@ exports.sendAppointmentUpdateEmail = async ({
     html,
   });
 };
+
+
+exports.sendOTPEmail = async (to, subject, text) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT || 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  const info = await transporter.sendMail({
+    from: `"Hospital App" <${process.env.SMTP_USER}>`,
+    to,
+    subject,
+    text,
+  });
+
+  return info;
+};
+
