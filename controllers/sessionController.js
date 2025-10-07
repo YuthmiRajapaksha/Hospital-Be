@@ -27,9 +27,16 @@ exports.getAvailableSessions = async (req, res) => {
       sessionMap[key] = row.count;
     });
 
+    // const available = sessions.filter(session => {
+    //   const key = `${session.session_date} ${session.session_time}`;
+    //   return (sessionMap[key] || 0) < MAX_BOOKINGS;
+    // });
+
     const available = sessions.filter(session => {
       const key = `${session.session_date} ${session.session_time}`;
-      return (sessionMap[key] || 0) < MAX_BOOKINGS;
+      const currentCount = sessionMap[key] || 0;
+      const maxAllowed = session.max_appointments || 5; // fallback if null
+      return currentCount < maxAllowed;
     });
 
     res.json(available);
