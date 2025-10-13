@@ -15,7 +15,7 @@ router.put('/:id', bookingFormController.updateAppointment);
 // Delete appointment by ID
 router.delete('/:id', bookingFormController.deleteAppointment);
 
-
+router.post("/sessions/multiple", bookingFormController.saveMultipleSessions);
 
 router.get("/sessions/:doctorId", async (req, res) => {
   const doctorId = req.params.doctorId;

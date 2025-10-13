@@ -8,6 +8,8 @@ const authenticateToken = require("../middleware/authenticateToken");
 // Create appointment 
 router.post("/", authenticateToken, appointmentsController.createAppointment);
 
+// router.post("/", bookAppointment);
+
 // Change appointment status 
 router.put("/appointments/:id/status", authenticateToken, appointmentsController.changeAppointmentStatus);
 
