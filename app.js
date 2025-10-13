@@ -54,6 +54,8 @@ app.use("/", appointmentsRoutes);
 
 app.use('/api/bookingForm', bookingFormRoutes); 
 
+app.use("/api", bookingFormRoutes);
+
 app.use("/api/doctors", doctorSearchRoutes);
 
 app.use("/api/bookingform", doctorSearchRoutes);
