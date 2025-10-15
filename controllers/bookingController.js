@@ -74,21 +74,53 @@
 const pool = require("../config/db"); // Your MySQL2 pool
 
 // GET all sessions for a doctor with assigned count
+// exports.getDoctorSessions = async (req, res) => {
+//   const { doctorId } = req.params;
+
+//   try {
+//     const [rows] = await pool.query(
+//       `SELECT bf.id, bf.hospital, bf.session_date, bf.session_time,
+//               COUNT(a.id) AS assigned_count
+//        FROM bookingform bf
+//        LEFT JOIN appointments a
+//          ON a.doctor_id = bf.doctor_id
+//          AND a.hospital = bf.hospital
+//          AND a.session_date = bf.session_date
+//          AND a.session_time = bf.session_time
+//        WHERE bf.doctor_id = ?
+//        GROUP BY bf.id, bf.hospital, bf.session_date, bf.session_time
+//        ORDER BY bf.session_date, bf.session_time`,
+//       [doctorId]
+//     );
+
+//     res.json({ appointments: rows });
+//   } catch (err) {
+//     console.error("DB error:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
+
 exports.getDoctorSessions = async (req, res) => {
   const { doctorId } = req.params;
 
   try {
     const [rows] = await pool.query(
-      `SELECT bf.id, bf.hospital, bf.session_date, bf.session_time,
-              COUNT(a.id) AS assigned_count
+      `SELECT 
+          bf.id, 
+          bf.hospital, 
+          bf.session_date, 
+          bf.session_time,
+          bf.max_appointments,
+          COUNT(a.id) AS assigned_count
        FROM bookingform bf
        LEFT JOIN appointments a
          ON a.doctor_id = bf.doctor_id
          AND a.hospital = bf.hospital
          AND a.session_date = bf.session_date
-         AND a.session_time = bf.session_time
+         AND TIME(a.session_time) = TIME(bf.session_time)
+         AND a.status != 'cancelled'
        WHERE bf.doctor_id = ?
-       GROUP BY bf.id, bf.hospital, bf.session_date, bf.session_time
+       GROUP BY bf.id, bf.hospital, bf.session_date, bf.session_time, bf.max_appointments
        ORDER BY bf.session_date, bf.session_time`,
       [doctorId]
     );
