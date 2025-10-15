@@ -16,8 +16,6 @@ const transporter = nodemailer.createTransport({
 });
 
 
-
-
 exports.sendAppointmentEmail = async ({
   patientName,
   email,
@@ -25,6 +23,7 @@ exports.sendAppointmentEmail = async ({
   hospital,
   sessionDate,
   sessionTime,
+   estimatedTime,
   phone,
   country,
   nic,
@@ -101,9 +100,10 @@ exports.sendAppointmentEmail = async ({
             <div class="details">
             <p><strong>Appointment Number:</strong> ${appointmentNumber}</p>
               <p><strong>Doctor:</strong> ${doctorName}</p>
-              <p><strong>Hospital:</strong> ${hospital}</p>
+              <p><strong>Hospital:</strong> ${hospital} MediCare Hospital</p>
               <p><strong>Session Date:</strong> ${sessionDate}</p>
               <p><strong>Session Time:</strong> ${sessionTime}</p>
+              <p><b>Estimated Time:</b> <span class="highlight">${estimatedTime}</span></p>
               <p><strong>Patient Name:</strong> ${patientName}</p>
               <p><strong>Phone:</strong> ${phone}</p>
               <p><strong>Country:</strong> ${country}</p>
@@ -174,7 +174,7 @@ exports.sendCancellationEmail = async ({
             <p>Your appointment has been cancelled . Below are the details:</p>
             <div class="details">
               <p><strong>Doctor:</strong> ${doctorName}</p>
-              <p><strong>Hospital:</strong> ${hospital}</p>
+              <p><strong>Hospital:</strong> ${hospital} MediCare Hospital</p>
               <p><strong>Session Date:</strong> ${sessionDate}</p>
               <p><strong>Session Time:</strong> ${sessionTime}</p>
               <p><strong>Phone:</strong> ${phone}</p>

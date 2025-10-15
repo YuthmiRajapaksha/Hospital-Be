@@ -1,12 +1,14 @@
-
-
 const express = require("express");
 const router = express.Router();
 const appointmentsController = require("../controllers/appointmentsController");
 const authenticateToken = require("../middleware/authenticateToken");
 
 // Create appointment 
-router.post("/", authenticateToken, appointmentsController.createAppointment);
+// router.post("/", authenticateToken, appointmentsController.createAppointment);
+
+// ✅ Allow booking without login
+router.post("/", appointmentsController.createAppointment);
+
 
 // router.post("/", bookAppointment);
 
@@ -21,7 +23,10 @@ router.get("/api/appointments/doctor/:doctorId/cancelled", appointmentsControlle
 router.get('/count/:doctorId', appointmentsController.countAppointments);
 
 // Get appointments by doctor id
-router.get("/doctor/:doctorId", appointmentsController.getAppointmentsByDoctorId);
+// router.get("/doctor/:doctorId", appointmentsController.getAppointmentsByDoctorId);
+// Get appointments by doctor id
+router.get("/doctor/:doctorId", appointmentsController.getAppointmentsByDoctor);
+
 
 // Get logged-in user's appointments (My Bookings)
 router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
