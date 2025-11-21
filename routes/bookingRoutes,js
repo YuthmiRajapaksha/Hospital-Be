@@ -19,3 +19,4 @@ router.delete("/:id", bookingController.deleteBooking);
 router.get("/doctor/:doctorId", bookingController.getDoctorAppointments);
 
 module.exports = router;
+  
