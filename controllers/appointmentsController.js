@@ -448,7 +448,15 @@ exports.changeAppointmentStatus = async (req, res) => {
   try {
     await pool.query("UPDATE appointments SET status = ? WHERE id = ?", [status, id]);
 
-    const [rows] = await pool.query("SELECT * FROM appointments WHERE id = ?", [id]);
+    // const [rows] = await pool.query("SELECT * FROM appointments WHERE id = ?", [id]);
+    const [rows] = await pool.query(
+  `SELECT a.*, d.name AS doctor_name
+   FROM appointments a
+   JOIN doctors d ON a.doctor_id = d.id
+   WHERE a.id = ?`,
+  [id]
+);
+
     const appointment = rows[0];
 
     
@@ -576,30 +584,17 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 
 
 
-
-
 exports.getMyAppointments = async (req, res) => {
-  
   try {
     const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const [rows] = await pool.query(
-    `SELECT 
-        a.*,
-        d.specialization
-      FROM 
-        appointments a
-      JOIN 
-        doctors d ON a.doctor_id = d.id
-      WHERE 
-        a.user_id = ?
-        
-      ORDER BY 
-        a.created_at DESC`,
+      `SELECT a.*, d.specialization
+       FROM appointments a
+       JOIN doctors d ON a.doctor_id = d.id
+       WHERE a.user_id = ?
+       ORDER BY a.created_at DESC`,
       [userId]
     );
 
@@ -609,6 +604,39 @@ exports.getMyAppointments = async (req, res) => {
     return res.status(500).json({ error: "Something went wrong" });
   }
 };
+
+
+// exports.getMyAppointments = async (req, res) => {
+  
+//   try {
+//     const userId = req.user?.id;
+
+//     if (!userId) {
+//       return res.status(401).json({ message: "Unauthorized" });
+//     }
+
+//     const [rows] = await pool.query(
+//     `SELECT 
+//         a.*,
+//         d.specialization
+//       FROM 
+//         appointments a
+//       JOIN 
+//         doctors d ON a.doctor_id = d.id
+//       WHERE 
+//         a.user_id = ?
+        
+//       ORDER BY 
+//         a.created_at DESC`,
+//       [userId]
+//     );
+
+//     return res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
 
 
 exports.getDoctorById = async (req, res) => {
@@ -646,6 +674,32 @@ exports.getDoctorById = async (req, res) => {
 //     res.status(500).json({ message: "Database error" });
 //   }
 // };
+// -------------------- Get Doctor Daily Revenue + Patient Count --------------------
+exports.getDailyStatsByDoctor = async (req, res) => {
+  const doctorId = req.params.id;
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+          session_date,
+          COUNT(*) AS patient_count,
+          (COUNT(*) * 2500) AS revenue
+       FROM appointments
+       WHERE doctor_id = ?
+         AND status != 'cancelled'
+       GROUP BY session_date
+       ORDER BY session_date DESC`,
+      [doctorId]
+    );
+
+    // res.json({ stats: rows });
+    res.json({ dailyStats: rows });
+
+  } catch (error) {
+    console.error("Daily stats error:", error);
+    res.status(500).json({ error: "Failed to fetch revenue and patient count" });
+  }
+};
 
 
 exports.getAllDoctorsWithPatientCountAndRevenue = async (req, res) => {
@@ -883,3 +937,35 @@ exports.getAllDoctorsWithPatientCount = async (req, res) => {
 };
 
 
+exports.getAppointmentsByDoctor = async (req, res) => {
+  const { doctorId } = req.params;
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT 
+        id,
+        bookingform_id,
+        doctor_id,
+        doctor_name,
+        hospital,
+        session_date,
+        session_time,
+        patient_name,
+        phone,
+        email,
+        nic,
+        status,
+        appointment_number,
+        estimated_time
+       FROM appointments
+       WHERE doctor_id = ?
+       ORDER BY session_date ASC, session_time ASC`,
+      [doctorId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error("Fetch doctor appointments error:", error);
+    res.status(500).json({ error: "Failed to load appointments" });
+  }
+};

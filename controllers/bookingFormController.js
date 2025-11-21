@@ -267,6 +267,29 @@
 //   }
 // };
 
+exports.getAppointmentsByDoctor = async (req, res) => {
+  const { doctorId } = req.params;
+  try {
+    const [sessions] = await db.query(
+      `SELECT b.*, 
+              COALESCE(a.total, 0) AS assigned_count
+       FROM bookingForm b
+       LEFT JOIN (
+         SELECT bookingform_id, COUNT(*) AS total
+         FROM appointments
+         WHERE status='active'
+         GROUP BY bookingform_id
+       ) a ON a.bookingform_id = b.id
+       WHERE b.doctor_id = ?
+       ORDER BY b.session_date ASC, b.session_time ASC`,
+      [doctorId]
+    );
+    res.json({ appointments: sessions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Database error" });
+  }
+};
 
 
 
