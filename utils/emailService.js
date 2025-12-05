@@ -316,24 +316,73 @@ exports.sendAppointmentUpdateEmail = async ({
 };
 
 
-exports.sendOTPEmail = async (to, subject, text) => {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT || 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+// exports.sendOTPEmail = async (to, subject, text) => {
+//   const transporter = nodemailer.createTransport({
+//     host: process.env.SMTP_HOST,
+//     port: process.env.SMTP_PORT || 587,
+//     secure: false,
+//     auth: {
+//       user: process.env.SMTP_USER,
+//       pass: process.env.SMTP_PASS,
+//     },
+//   });
 
-  const info = await transporter.sendMail({
-    from: `"Hospital App" <${process.env.SMTP_USER}>`,
-    to,
-    subject,
-    text,
-  });
+//   const info = await transporter.sendMail({
+//     from: `"Hospital App" <${process.env.SMTP_USER}>`,
+//     to,
+//     subject,
+//     text,
+//   });
 
-  return info;
+//   return info;
+// };
+
+// ================================
+// 5. SEND OTP EMAIL (for 2-step signup)
+// ================================
+exports.sendOTPEmail = async (email, pin) => {
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM || "nirajapaksha1998@gmail.com",
+    to: email,
+    subject: "Your Verification PIN",
+    text: `Your verification PIN is: ${pin}`,
+  });
 };
 
+
+exports.sendDoctorArrivedEmail = async ({
+  patientName,
+  email,
+  doctorName,
+  hospital,
+  sessionDate,
+  sessionTime,
+  appointmentNumber,
+  estimatedTime
+}) => {
+  const mailOptions = {
+    to: email,
+    subject: `Dr. ${doctorName} has arrived - Your appointment is active`,
+    html: `
+      <h2>Doctor Arrived Notification</h2>
+      <p>Hello <b>${patientName}</b>,</p>
+
+      <p>Dr. <strong>${doctorName}</strong> has arrived at 
+      <b>${hospital}</b> for the scheduled session.</p>
+
+      <p><strong>Your appointment details:</strong></p>
+      <ul>
+        <li>Date: ${sessionDate}</li>
+        <li>Session Start: ${sessionTime}</li>
+        <li>Your Number: ${appointmentNumber}</li>
+        <li>Estimated Time: ${estimatedTime}</li>
+      </ul>
+
+      <p>Please be ready. Thank you for using our service.</p>
+      <br/>
+      <small>Hospital Channeling System</small>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};

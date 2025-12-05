@@ -188,8 +188,22 @@ const bookingFormRoutes = require("./routes/bookingFormRoutes");
 const doctorSearchRoutes = require("./routes/doctorSearchRoutes");
 const sessionRoutes = require("./routes/session");
 
+
 app.use(cors());
+app.use(express.json());  
 app.use(bodyParser.json());
+
+const sendPin = require("./routes/sendPin");
+const otpVerify = require("./routes/otpVerify");
+
+
+
+app.use("/api", sendPin);
+app.use("/api", otpVerify);
+
+
+// app.use(cors());
+// app.use(bodyParser.json());
 
 // Public uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

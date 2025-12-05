@@ -45,6 +45,7 @@ async function setupDatabase() {
         hospital VARCHAR(100) NOT NULL,
         session_date DATE NOT NULL,
         session_time TIME NOT NULL,
+         max_appointments INT NOT NULL DEFAULT 5,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE
       );
