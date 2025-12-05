@@ -46,5 +46,10 @@ router.put("/change-password", authenticateToken, authController.changePassword)
 router.get("/protected", authenticateToken, (req, res) => {
   res.json({ message: "Protected route accessed", user: req.user });
 });
+router.post("/verify-otp", authController.verifyOTP);
+
+
+router.post("/send-otp", authController.sendOTP);
+
 
 module.exports = router;

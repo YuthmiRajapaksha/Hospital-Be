@@ -172,6 +172,7 @@
 const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 // -------------------------------
 // ADMIN + DOCTOR LOGIN
@@ -222,6 +223,45 @@ exports.doctorAdminLogin = async (req, res) => {
 // -------------------------------
 // USER REGISTRATION
 // -------------------------------
+// exports.registerUser = async (req, res) => {
+//   const { country, phone, email, title, firstName, lastName, idType, nicOrPassport, password } =
+//     req.body;
+
+//   if (!email || !password)
+//     return res.status(400).json({ message: "Email and password required" });
+
+//   try {
+//     let finalNIC = nicOrPassport.trim();
+
+//     if (idType === "NIC") {
+//       if (/^\d{9}$/.test(finalNIC)) finalNIC += "V";
+//       finalNIC = finalNIC.toUpperCase();
+//     }
+
+//     const [existing] = await db.query(
+//       "SELECT * FROM users WHERE email = ? OR nic_or_passport = ?",
+//       [email, finalNIC]
+//     );
+
+//     if (existing.length > 0)
+//       return res.status(400).json({ message: "Email or NIC/Passport already exists" });
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     await db.query(
+//       `INSERT INTO users (country, phone, email, title, first_name, last_name, id_type, nic_or_passport, password)
+//        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [country, phone, email, title, firstName, lastName, idType, finalNIC, hashedPassword]
+//     );
+
+//     res.status(201).json({ message: "User registered successfully" });
+//   } catch (err) {
+//     console.error("Register error:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+
 exports.registerUser = async (req, res) => {
   const { country, phone, email, title, firstName, lastName, idType, nicOrPassport, password } =
     req.body;
@@ -259,6 +299,7 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // -------------------------------
 // USER LOGIN
@@ -368,3 +409,71 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+// Store OTP temporarily (in-memory)
+// let otpStore = {};  
+
+exports.sendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  // Generate 6-digit OTP
+  const otp = crypto.randomInt(100000, 999999).toString();
+
+  // Save temporarily (better to store in DB for production)
+  otpStore[email] = otp;
+
+  // Email template
+  const mailOptions = {
+    from: "noreply@medicare.com",
+    to: email,
+    subject: "Your OTP Code for Signup",
+    html: `
+      <div style="background:#f5f7fa;padding:20px;font-family:Arial">
+        <div style="max-width:600px;background:#fff;padding:30px;margin:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)">
+          <h2 style="text-align:center;color:#0b5ed7">Your Verification Code</h2>
+
+          <p>Hello,</p>
+          <p>Your OTP for signup verification is:</p>
+
+          <h1 style="text-align:center; letter-spacing:5px; color:#0b5ed7;">
+            ${otp}
+          </h1>
+
+          <p>This OTP will expire in <strong>5 minutes</strong>.</p>
+
+          <p style="margin-top:30px;">Thank you,<br/>MediCare Hospital</p>
+        </div>
+      </div>
+    `,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log("❌ Error sending OTP:", error);
+      return res.status(500).json({ message: "OTP sending failed" });
+    }
+    console.log("✅ OTP sent:", otp);
+    return res.json({ success: true, message: "OTP sent successfully" });
+  });
+};
+
+exports.verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: "Email and OTP required" });
+  }
+
+  if (otpStore[email] && otpStore[email] === otp) {
+    delete otpStore[email]; // remove after verifying
+    return res.json({ success: true, message: "OTP verified" });
+  }
+
+  return res.status(400).json({ message: "Invalid or expired OTP" });
+};
+
