@@ -98,7 +98,7 @@ async function setupDatabase() {
 
     // ADD MISSING COLUMNS TO APPOINTMENTS TABLE
     const columnsToAdd = [
-      { name: "user_id", type: "INT NULL" },
+      { name: "user_id", type: "INT NOT NULL" },
       { name: "phone", type: "VARCHAR(20) NOT NULL" },
       { name: "country", type: "VARCHAR(50) NOT NULL" },
       { name: "nic", type: "VARCHAR(20) NOT NULL" },

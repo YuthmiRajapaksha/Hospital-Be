@@ -124,6 +124,8 @@ router.get("/count/:doctorId", appointmentsController.countAppointments);
 // Get logged-in user's appointments
 router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
 
+
+
 // Appointment stats
 router.get("/count-all", appointmentsController.getTotalAppointmentsCount);
 router.get("/count-today", appointmentsController.getTodayAppointmentsCount);

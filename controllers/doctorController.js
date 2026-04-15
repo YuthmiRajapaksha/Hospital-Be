@@ -110,44 +110,157 @@ exports.getDoctorById = async (req, res) => {
 };
 
 
-exports.updateDoctor = async (req, res) => {
-  const { id } = req.params;
-  const {
-    name,
-    specialization,
+// exports.updateDoctor = async (req, res) => {
+//   const { id } = req.params;
+//   const {
+//     name,
+//     specialization,
     
-    email,
-    contactNumber,
-    userName,
-    password,
-  } = req.body;
+//     email,
+//     contactNumber,
+//     userName,
+//     password,
+//   } = req.body;
 
-  const photo = req.file ? req.file.filename : null;
+//   const photo = req.file ? req.file.filename : null;
 
-  if (!name || !specialization || !userName || !password) {
-    return res.status(400).json({ message: "Name, Specialization, Username, and Password are required!" });
-  }
+//   if (!name || !specialization || !userName || !password) {
+//     return res.status(400).json({ message: "Name, Specialization, Username, and Password are required!" });
+//   }
 
-  const query = photo
-    ? `UPDATE doctors SET name=?, specialization=?,  email=?, contactNumber=?, userName=?, password=?, photo=? WHERE id=?`
-    : `UPDATE doctors SET name=?, specialization=?,  email=?, contactNumber=?, userName=?, password=? WHERE id=?`;
+//   const query = photo
+//     ? `UPDATE doctors SET name=?, specialization=?,  email=?, contactNumber=?, userName=?, password=?, photo=? WHERE id=?`
+//     : `UPDATE doctors SET name=?, specialization=?,  email=?, contactNumber=?, userName=?, password=? WHERE id=?`;
 
-  const values = photo
-    ? [name, specialization,  email, contactNumber, userName, password, photo, id]
-    : [name, specialization,  email, contactNumber, userName, password, id];
+//   const values = photo
+//     ? [name, specialization,  email, contactNumber, userName, password, photo, id]
+//     : [name, specialization,  email, contactNumber, userName, password, id];
 
+//   try {
+//     const [result] = await pool.query(query, values);
+//     if (result.affectedRows === 0) {
+//       return res.status(404).json({ message: "Doctor not found" });
+//     }
+//     res.status(200).json({ message: "Doctor updated successfully!" });
+//   } catch (err) {
+//     console.error("Error updating doctor:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
+
+
+// exports.updateDoctor = async (req, res) => {
+//   try {
+//     const { name, specialization, email, contactNumber, userName, password } = req.body;
+//     const doctorId = req.params.id;
+
+//     // ✅ Only required fields for update
+//     if (!name || !specialization || !email) {
+//       return res.status(400).json({
+//         message: "Name, Specialization, and Email are required!"
+//       });
+//     }
+
+//     let query = `
+//       UPDATE doctors 
+//       SET name = ?, specialization = ?, email = ?, contactNumber = ?
+//     `;
+
+//     const values = [name, specialization, email, contactNumber];
+
+//     // ✅ Update username only if provided
+//     if (userName) {
+//       query += `, userName = ?`;
+//       values.push(userName);
+//     }
+
+//     // ✅ Update password only if provided
+//     if (password) {
+//       query += `, password = ?`;
+//       values.push(password);
+//     }
+
+//     // ✅ Update photo only if uploaded
+//     if (req.file) {
+//       query += `, photo = ?`;
+//       values.push(req.file.filename);
+//     }
+
+//     query += ` WHERE id = ?`;
+//     values.push(doctorId);
+
+//     await db.query(query, values);
+
+//     res.json({ message: "Doctor updated successfully!" });
+
+//   } catch (error) {
+//     console.error("Update error:", error);
+//     res.status(500).json({ message: "Server error while updating doctor" });
+//   }
+// };
+
+exports.updateDoctor = async (req, res) => {
   try {
-    const [result] = await pool.query(query, values);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Doctor not found" });
+    const doctorId = req.params.id;
+    const { name, specialization, email, contactNumber, userName, password } = req.body;
+
+    let fields = [];
+    let values = [];
+
+    // ✅ Only push fields if they exist
+    if (name) {
+      fields.push("name = ?");
+      values.push(name);
     }
-    res.status(200).json({ message: "Doctor updated successfully!" });
-  } catch (err) {
-    console.error("Error updating doctor:", err);
-    res.status(500).json({ message: "Database error" });
+
+    if (specialization) {
+      fields.push("specialization = ?");
+      values.push(specialization);
+    }
+
+    if (email) {
+      fields.push("email = ?");
+      values.push(email);
+    }
+
+    if (contactNumber) {
+      fields.push("contactNumber = ?");
+      values.push(contactNumber);
+    }
+
+    if (userName) {
+      fields.push("userName = ?");
+      values.push(userName);
+    }
+
+    if (password) {
+      fields.push("password = ?");
+      values.push(password);
+    }
+
+    if (req.file) {
+      fields.push("photo = ?");
+      values.push(req.file.filename);
+    }
+
+    // ❌ No fields to update
+    if (fields.length === 0) {
+      return res.status(400).json({ message: "No data provided to update" });
+    }
+
+    const query = `UPDATE doctors SET ${fields.join(", ")} WHERE id = ?`;
+    values.push(doctorId);
+
+    // await db.query(query, values);
+    await pool.query(query, values);
+
+    res.json({ message: "Doctor updated successfully!" });
+
+  } catch (error) {
+    console.error("🔥 Update error:", error); // VERY IMPORTANT
+    res.status(500).json({ message: "Server error while updating doctor" });
   }
 };
-
 
 exports.deleteDoctor = async (req, res) => {
   const doctorId = req.params.id;

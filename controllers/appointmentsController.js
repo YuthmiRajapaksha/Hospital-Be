@@ -185,7 +185,14 @@ exports.createAppointment = async (req, res) => {
   }
 
   try {
+    // const userId = req.user?.id || null;
+    // const userId = req.body.userId;
     const userId = req.user?.id || null;
+
+       // ✅ ADD THIS HERE
+    if (!userId) {
+      console.log("Guest booking");
+    }
 
     // Duplicate check
     const [existing] = await pool.query(
@@ -584,10 +591,170 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 
 
 
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+    
+//     if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+//     const [rows] = await pool.query(
+//       `SELECT a.*, d.specialization
+//        FROM appointments a
+//        JOIN doctors d ON a.doctor_id = d.id
+//        WHERE a.user_id = ?
+//        ORDER BY a.created_at DESC`,
+//       [userId]
+//     );
+
+//     return res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+//     const email = req.query.email; // 👈 for guest
+
+//     let query = `
+//       SELECT a.*, d.specialization
+//       FROM appointments a
+//       JOIN doctors d ON a.doctor_id = d.id
+//     `;
+
+//     let params = [];
+
+//     if (userId) {
+//       // ✅ Logged-in user
+//       query += ` WHERE a.user_id = ?`;
+//       params.push(userId);
+//     } else if (email) {
+//       // ✅ Guest user
+//       query += ` WHERE a.email = ?`;
+//       params.push(email);
+//     } else {
+//       return res.status(400).json({ message: "User not identified" });
+//     }
+
+//     query += ` ORDER BY a.created_at DESC`;
+
+//     const [rows] = await pool.query(query, params);
+
+//     return res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id || null; // if token middleware used
+//     const email = req.query.email || null;
+
+//     let query = `
+//       SELECT a.*, d.specialization
+//       FROM appointments a
+//       JOIN doctors d ON a.doctor_id = d.id
+//     `;
+
+//     let params = [];
+
+//     if (userId) {
+//       // ✅ Logged-in user
+//       query += ` WHERE a.user_id = ?`;
+//       params.push(userId);
+//     } else if (email) {
+//       // ✅ Guest user
+//       query += ` WHERE a.email = ?`;
+//       params.push(email);
+//     } else {
+//       return res.status(400).json({
+//         message: "Provide login token or email",
+//       });
+//     }
+
+//     query += ` ORDER BY a.created_at DESC`;
+
+//     const [rows] = await pool.query(query, params);
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error("Get appointments error:", error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     let userId = null;
+
+//     // ✅ Safely check token (optional auth)
+//     if (req.headers.authorization) {
+//       try {
+//         const decoded = jwt.verify(
+//           req.headers.authorization.split(" ")[1],
+//           process.env.JWT_SECRET
+//         );
+//         userId = decoded.id;
+//       } catch (err) {
+//         console.log("Invalid token");
+//       }
+//     }
+
+//     const email = req.query.email;
+
+//     // let query = `
+//     //   SELECT a.*, d.specialization
+//     //   FROM appointments a
+//     //   JOIN doctors d ON a.doctor_id = d.id
+//     // `;
+
+//     let query = `
+//   SELECT a.*, d.specialization
+//   FROM appointments a
+//   JOIN doctors d ON a.doctor_id = d.id
+//   `;
+
+//     let params = [];
+
+//     if (userId) {
+//       query += ` WHERE a.user_id = ?`;
+//       params.push(userId);
+//     } else if (email) {
+//       query += ` WHERE a.email = ?`;
+//       params.push(email);
+//     } else {
+//       return res.status(400).json({ message: "Provide login or email" });
+//     }
+
+//     query += ` ORDER BY a.created_at DESC`;
+
+//     const [rows] = await pool.query(query, params);
+
+//     console.log("RESULT:", rows); // 🔥 DEBUG
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
 exports.getMyAppointments = async (req, res) => {
   try {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const [rows] = await pool.query(
       `SELECT a.*, d.specialization
@@ -598,13 +765,12 @@ exports.getMyAppointments = async (req, res) => {
       [userId]
     );
 
-    return res.json(rows);
+    res.json(rows);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Something went wrong" });
+    res.status(500).json({ error: "Something went wrong" });
   }
 };
-
 
 // exports.getMyAppointments = async (req, res) => {
   
@@ -674,6 +840,8 @@ exports.getDoctorById = async (req, res) => {
 //     res.status(500).json({ message: "Database error" });
 //   }
 // };
+
+
 // -------------------- Get Doctor Daily Revenue + Patient Count --------------------
 exports.getDailyStatsByDoctor = async (req, res) => {
   const doctorId = req.params.id;

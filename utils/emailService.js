@@ -340,6 +340,7 @@ exports.sendAppointmentUpdateEmail = async ({
 // ================================
 // 5. SEND OTP EMAIL (for 2-step signup)
 // ================================
+
 exports.sendOTPEmail = async (email, pin) => {
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || "nirajapaksha1998@gmail.com",
