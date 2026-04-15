@@ -301,6 +301,36 @@ exports.registerUser = async (req, res) => {
 };
 
 
+exports.checkEmail = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  try {
+    const [rows] = await db.query(
+      "SELECT id FROM users WHERE email = ?",
+      [normalizedEmail]
+    );
+
+    if (rows.length > 0) {
+      return res.status(400).json({
+        message: "Email already registered"
+      });
+    }
+
+    return res.json({ message: "Email available" });
+  } catch (err) {
+    console.error("Check email error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
 // -------------------------------
 // USER LOGIN
 // -------------------------------
