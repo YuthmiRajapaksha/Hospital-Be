@@ -125,6 +125,13 @@ router.get("/count/:doctorId", appointmentsController.countAppointments);
 router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
 
 
+// router.post("/notify-doctor-arrived",appointmentsController.notifyPatientsDoctorArrived);
+
+router.post(
+  "/notify-doctor-arrived",
+//   authenticateToken,
+  appointmentsController.notifyDoctorArrived
+);
 
 // Appointment stats
 router.get("/count-all", appointmentsController.getTotalAppointmentsCount);
