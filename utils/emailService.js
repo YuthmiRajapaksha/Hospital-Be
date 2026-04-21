@@ -351,6 +351,161 @@ exports.sendOTPEmail = async (email, pin) => {
 };
 
 
+// exports.sendDoctorArrivedEmail = async ({
+//   patientName,
+//   email,
+//   doctorName,
+//   hospital,
+//   sessionDate,
+//   sessionTime,
+//   appointmentNumber,
+//   estimatedTime
+// }) => {
+//   const mailOptions = {
+//     to: email,
+//     subject: `Dr. ${doctorName} has arrived - Your appointment is active`,
+//     html: `
+//       <h2>Doctor Arrived Notification</h2>
+//       <p>Hello <b>${patientName}</b>,</p>
+
+//       <p>Dr. <strong>${doctorName}</strong> has arrived at 
+//       <b>${hospital}</b> for the scheduled session.</p>
+
+//       <p><strong>Your appointment details:</strong></p>
+//       <ul>
+//         <li>Date: ${sessionDate}</li>
+//         <li>Session Start: ${sessionTime}</li>
+//         <li>Your Number: ${appointmentNumber}</li>
+//         <li>Estimated Time: ${estimatedTime}</li>
+//       </ul>
+
+//       <p>Please be ready. Thank you for using our service.</p>
+//       <br/>
+//       <small>Hospital Channeling System</small>
+//     `,
+//   };
+
+//   await transporter.sendMail(mailOptions);
+// };
+
+
+
+// exports.sendDoctorArrivedEmail = async ({
+//   patientName,
+//   email,
+//   doctorName,
+//   hospital,
+//   sessionTime,
+// }) => {
+//   const message = `
+//     Hello ${patientName},
+
+//     Dr. ${doctorName} has arrived at ${hospital}.
+
+//     Your appointment is scheduled at ${sessionTime}.
+//     Please proceed to the hospital.
+
+//     Thank you.
+//   `;
+
+//   console.log("Sending email to:", email);
+//   console.log(message);
+
+//   // If using SendGrid / Nodemailer → send here
+// };
+
+
+// exports.sendDoctorArrivedEmail = async ({
+//   patientName,
+//   email,
+//   doctorName,
+//   hospital,
+//   sessionDate,
+//   sessionTime,
+//   appointmentNumber,
+//   estimatedTime
+// }) => {
+//   const mailOptions = {
+//     from: 'nirajapaksha1998@gmail.com',
+//     to: email,
+//     subject: `Dr. ${doctorName} has arrived - Please come now`,
+//     html: `
+//       <!DOCTYPE html>
+//       <html>
+//       <head>
+//         <style>
+//           body {
+//             background-color: #f5f7fa;
+//             font-family: Arial, sans-serif;
+//           }
+//           .container {
+//             max-width: 600px;
+//             margin: 30px auto;
+//             background: #fff;
+//             border-radius: 8px;
+//             overflow: hidden;
+//             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+//           }
+//           .header {
+//             background: #2B909B;
+//             color: #fff;
+//             padding: 20px;
+//             text-align: center;
+//           }
+//           .content {
+//             padding: 30px;
+//             color: #333;
+//           }
+//           .footer {
+//             background: #f0f0f0;
+//             padding: 20px;
+//             text-align: center;
+//             font-size: 12px;
+//             color: #777;
+//           }
+//         </style>
+//       </head>
+
+//       <body>
+//         <div class="container">
+//           <div class="header">
+//             <h2>Doctor Arrived Notification</h2>
+//           </div>
+
+//           <div class="content">
+//             <p>Dear <b>${patientName}</b>,</p>
+
+//             <p>
+//               Dr. <strong>${doctorName}</strong> has arrived at 
+//               <strong>${hospital}</strong>.
+//             </p>
+
+//             <p>Please come to the hospital now.</p>
+
+//             <h3>Your Appointment Details:</h3>
+//             <ul>
+//               <li><b>Date:</b> ${sessionDate}</li>
+//               <li><b>Session Time:</b> ${sessionTime}</li>
+//               <li><b>Your Number:</b> ${appointmentNumber}</li>
+//               <li><b>Estimated Time:</b> ${estimatedTime}</li>
+//             </ul>
+
+//             <p>Thank you.</p>
+//           </div>
+
+//           <div class="footer">
+//             © 2025 MediCare Hospital
+//           </div>
+//         </div>
+//       </body>
+//       </html>
+//     `,
+//   };
+
+//   await transporter.sendMail(mailOptions);
+// };
+
+
 exports.sendDoctorArrivedEmail = async ({
   patientName,
   email,
@@ -362,26 +517,42 @@ exports.sendDoctorArrivedEmail = async ({
   estimatedTime
 }) => {
   const mailOptions = {
+    from: 'nirajapaksha1998@gmail.com',
     to: email,
-    subject: `Dr. ${doctorName} has arrived - Your appointment is active`,
+    subject: `Dr. ${doctorName} has arrived - Please come now`,
     html: `
-      <h2>Doctor Arrived Notification</h2>
-      <p>Hello <b>${patientName}</b>,</p>
+      <html>
+      <body style="background:#f5f7fa;font-family:Arial;">
+        <div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;">
+          <div style="background:#2B909B;color:#fff;padding:20px;text-align:center;">
+            <h2>Doctor Arrived Notification</h2>
+          </div>
 
-      <p>Dr. <strong>${doctorName}</strong> has arrived at 
-      <b>${hospital}</b> for the scheduled session.</p>
+          <div style="padding:30px;">
+            <p>Dear <b>${patientName}</b>,</p>
 
-      <p><strong>Your appointment details:</strong></p>
-      <ul>
-        <li>Date: ${sessionDate}</li>
-        <li>Session Start: ${sessionTime}</li>
-        <li>Your Number: ${appointmentNumber}</li>
-        <li>Estimated Time: ${estimatedTime}</li>
-      </ul>
+            <p>
+              Dr. <strong>${doctorName}</strong> has arrived at 
+              <strong>${hospital}</strong>.
+            </p>
 
-      <p>Please be ready. Thank you for using our service.</p>
-      <br/>
-      <small>Hospital Channeling System</small>
+            <p><b>Please come to the hospital now.</b></p>
+
+            <h3>Your Appointment Details:</h3>
+            <ul>
+              <li>Date: ${sessionDate}</li>
+              <li>Time: ${sessionTime}</li>
+              <li>Number: ${appointmentNumber}</li>
+              <li>Estimated Time: ${estimatedTime}</li>
+            </ul>
+          </div>
+
+          <div style="background:#f0f0f0;padding:20px;text-align:center;font-size:12px;">
+            © 2025 MediCare Hospital
+          </div>
+        </div>
+      </body>
+      </html>
     `,
   };
 

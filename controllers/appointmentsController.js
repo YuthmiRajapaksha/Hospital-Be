@@ -1,6 +1,7 @@
 
 const pool = require("../config/db");
 const emailService = require("../utils/emailService");
+const { sendDoctorArrivedEmail } = require("../utils/emailService");
 
 
 exports.bookAppointment = async (req, res) => {
@@ -52,114 +53,6 @@ exports.bookAppointment = async (req, res) => {
 };
 
 
-// exports.createAppointment = async (req, res) => {
-//   const {
-//     doctorId,
-//     doctorName,
-//     hospital,
-//     sessionDate,
-//     sessionTime,
-//     patientName,
-//     phone,
-//     country,
-//     nic,
-//     email,
-//     date,
-//     paymentId,
-//     bookingformId,
-//   } = req.body;
-
-//   if (!doctorId) {
-//     return res.status(400).json({ error: "Doctor ID missing, cannot book appointment." });
-//   }
-
-//   if (!hospital || !sessionDate || !sessionTime) {
-//     return res.status(400).json({ error: "Missing session data" });
-//   }
-
-//   if (!bookingformId) return res.status(400).json({ error: "Missing bookingform ID" });
-
-//   try {
-//     const userId = req.user?.id || null; 
-
-//      //  Duplicate check
-//     const [existing] = await pool.query(
-//       `SELECT id FROM appointments 
-//        WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?
-//        AND patient_name = ? AND nic = ? AND status != 'cancelled'`,
-//       [doctorId, hospital, sessionDate, sessionTime, patientName, nic]
-//     );
-
-//     if (existing.length > 0) {
-//       return res.status(409).json({ error: "You already have an active appointment for this time slot." });
-//     }
-
-
-//     // Check session availability
-// const [sessionRows] = await pool.query(
-//   "SELECT max_appointments FROM bookingform WHERE id = ?",
-//   [bookingformId]
-// );
-
-// if (!sessionRows.length) return res.status(404).json({ error: "Session not found" });
-
-// const maxAllowed = sessionRows[0].max_appointments;
-
-// // Count existing active bookings for this session
-// const [countRows] = await pool.query(
-//   `SELECT COUNT(*) AS count FROM appointments 
-//    WHERE bookingform_id = ? AND status != 'cancelled'`,
-//   [bookingformId]
-// );
-
-// if (countRows[0].count >= maxAllowed) {
-//   return res.status(409).json({ error: "This session is fully booked" });
-// }
-
-
-//     const [result] = await pool.query(
-//       `INSERT INTO appointments (
-//         doctor_id, doctor_name, hospital, session_date, session_time,
-//         patient_name, phone, country, nic, email, date, payment_id, user_id, bookingform_id
-//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-//       [
-//         doctorId,
-//         doctorName,
-//         hospital,
-//         sessionDate,
-//         sessionTime,
-//         patientName,
-//         phone,
-//         country,
-//         nic,
-//         email,
-//         date,
-//         paymentId,
-//         userId,
-//         bookingformId,
-//       ]
-//     );
-
-   
-//     await emailService.sendAppointmentEmail({
-//       patientName,
-//       email,
-//       doctorName,
-//       hospital,
-//       sessionDate,
-//       sessionTime,
-//       phone,
-//       country,
-//       nic,
-//       charge: 2500,
-//     });
-
-//     res.status(201).json({ message: "Appointment created and email sent successfully" });
-//   } catch (error) {
-//     console.error("Create appointment error:", error);
-//     res.status(500).json({ error: "Something went wrong" });
-//   }
-// };
 
 
 // -------------------- Booking an Appointment --------------------
@@ -317,37 +210,7 @@ exports.createAppointment = async (req, res) => {
 };
 
 
-// -------------------- Get Doctor Sessions with Assigned Count --------------------
-// exports.getDoctorSessions = async (req, res) => {
-//   const { doctorId } = req.params;
 
-//   try {
-//     const [rows] = await pool.query(
-//       `SELECT 
-//           bf.id, 
-//           bf.hospital, 
-//           bf.session_date, 
-//           bf.session_time,
-//           COUNT(a.id) AS assigned_count
-//        FROM bookingform bf
-//        LEFT JOIN appointments a
-//          ON a.doctor_id = bf.doctor_id
-//          AND a.hospital = bf.hospital
-//          AND a.session_date = bf.session_date
-//          AND TIME(a.session_time) = TIME(bf.session_time)
-//          AND a.status != 'cancelled'
-//        WHERE bf.doctor_id = ?
-//        GROUP BY bf.id, bf.hospital, bf.session_date, bf.session_time
-//        ORDER BY bf.session_date, bf.session_time`,
-//       [doctorId]
-//     );
-
-//     res.json({ appointments: rows });
-//   } catch (err) {
-//     console.error("DB error:", err);
-//     res.status(500).json({ message: "Database error" });
-//   }
-// };
 
 
 exports.getDoctorSessions = async (req, res) => {
@@ -396,21 +259,141 @@ exports.getDoctorById = async (req, res) => {
 };
 
 // -------------------- Update Booking Form Appointment --------------------
+// const { sendAppointmentUpdateEmail } = require("../utils/emailService");
+
+
 exports.updateAppointment = async (req, res) => {
   const { id } = req.params;
   const { hospital, session_date, session_time } = req.body;
 
   try {
+    console.log("🔥 UPDATE API HIT");
+
+    // 1. get old session
+    const [oldSession] = await pool.query(
+      "SELECT * FROM bookingform WHERE id=?",
+      [id]
+    );
+
+    const old = oldSession[0];
+
+    // 2. update session
     await pool.query(
       "UPDATE bookingform SET hospital=?, session_date=?, session_time=? WHERE id=?",
       [hospital, session_date, session_time, id]
     );
-    res.json({ message: "Appointment updated successfully" });
+
+    // 3. get patients
+    const [patients] = await pool.query(
+      `SELECT * FROM appointments
+       WHERE doctor_id = ?
+       AND hospital = ?
+       AND session_date = ?
+       AND TIME(session_time) = TIME(?)
+       AND status != 'cancelled'`,
+      [old.doctor_id, old.hospital, old.session_date, old.session_time]
+    );
+
+    console.log("👥 Patients found:", patients.length);
+
+    // 4. send emails
+    for (let p of patients) {
+      console.log("📧 Sending email to:", p.email);
+
+      await sendAppointmentUpdateEmail({
+        patientName: p.patient_name,
+        email: p.email,
+        doctorName: p.doctor_name || "Doctor",
+        hospital,
+        sessionDate: session_date,
+        sessionTime: session_time,
+      });
+    }
+
+    res.json({ message: "Updated + emails sent" });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Database error" });
+    console.error("❌ ERROR:", err);
+    res.status(500).json({ message: "Error" });
   }
 };
+
+// exports.updateAppointment = async (req, res) => {
+//   const { id } = req.params;
+//   const { hospital, session_date, session_time } = req.body;
+
+//   try {
+//     console.log("🔥 UPDATE API HIT");
+//     // ✅ 1. GET OLD SESSION DETAILS FIRST
+//     const [oldSession] = await pool.query(
+//       "SELECT * FROM bookingform WHERE id = ?",
+//       [id]
+//     );
+
+//     if (oldSession.length === 0) {
+//       return res.status(404).json({ message: "Session not found" });
+//     }
+
+//     const old = oldSession[0];
+
+//     // ✅ 2. UPDATE SESSION
+//     await pool.query(
+//       "UPDATE bookingform SET hospital=?, session_date=?, session_time=? WHERE id=?",
+//       [hospital, session_date, session_time, id]
+//     );
+
+//     // ✅ 3. GET ALL PATIENTS WHO BOOKED THIS SESSION
+//     const [patients] = await pool.query(
+//       `
+//       SELECT * FROM appointments
+//       WHERE doctor_id = ?
+//       AND hospital = ?
+//       AND session_date = ?
+//       AND TIME(session_time) = TIME(?)
+//       AND status != 'cancelled'
+//       `,
+//       [old.doctor_id, old.hospital, old.session_date, old.session_time]
+//     );
+
+//     console.log("📧 Patients to notify:", patients.length);
+
+//     // ✅ 4. SEND EMAIL TO ALL PATIENTS
+//     for (let patient of patients) {
+//       await sendAppointmentUpdateEmail({
+//         patientName: patient.patient_name,
+//         email: patient.email,
+//         doctorName: patient.doctor_name || "Doctor",
+//         hospital: hospital, // NEW updated
+//         sessionDate: session_date,
+//         sessionTime: session_time,
+//       });
+//     }
+
+//     res.json({
+//       message: "Appointment updated + patients notified",
+//     });
+
+//   } catch (err) {
+//     console.error("❌ Update error:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
+
+// exports.updateAppointment = async (req, res) => {
+//   const { id } = req.params;
+//   const { hospital, session_date, session_time } = req.body;
+
+//   try {
+//     await pool.query(
+//       "UPDATE bookingform SET hospital=?, session_date=?, session_time=? WHERE id=?",
+//       [hospital, session_date, session_time, id]
+//     );
+//     res.json({ message: "Appointment updated successfully" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
 
 // -------------------- Delete Appointment --------------------
 exports.deleteAppointment = async (req, res) => {
@@ -529,39 +512,6 @@ exports.countAppointments = async (req, res) => {
 };
 
 
-// exports.getAppointmentsByDoctorId = async (req, res) => {
-//   const { doctorId } = req.params;
-
-//   try {
-//     const [rows] = await pool.query(
-//       "SELECT * FROM appointments WHERE doctor_id = ? ORDER BY session_date, session_time",
-//       [doctorId]
-//     );
-
-//     res.json(rows);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: "Failed to fetch appointments" });
-//   }
-// };
-
-// exports.getAppointmentsByDoctor = async (req, res) => {
-//   const { doctorId } = req.params;
-
-//   try {
-//     const [appointments] = await pool.query(
-//       `SELECT id, appointment_number, patient_name, hospital, session_date, session_time, email, phone, nic, status 
-//        FROM appointments 
-//        WHERE doctor_id = ?
-//        ORDER BY session_date, session_time`,
-//       [doctorId]
-//     );
-//     res.json(appointments);
-//   } catch (error) {
-//     console.error("Error fetching appointments:", error);
-//     res.status(500).json({ message: "Error fetching appointments" });
-//   }
-// };
 
 exports.getAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
@@ -591,163 +541,6 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 
 
 
-// exports.getMyAppointments = async (req, res) => {
-//   try {
-//     const userId = req.user?.id;
-    
-//     if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-//     const [rows] = await pool.query(
-//       `SELECT a.*, d.specialization
-//        FROM appointments a
-//        JOIN doctors d ON a.doctor_id = d.id
-//        WHERE a.user_id = ?
-//        ORDER BY a.created_at DESC`,
-//       [userId]
-//     );
-
-//     return res.json(rows);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: "Something went wrong" });
-//   }
-// };
-
-
-
-// exports.getMyAppointments = async (req, res) => {
-//   try {
-//     const userId = req.user?.id;
-//     const email = req.query.email; // 👈 for guest
-
-//     let query = `
-//       SELECT a.*, d.specialization
-//       FROM appointments a
-//       JOIN doctors d ON a.doctor_id = d.id
-//     `;
-
-//     let params = [];
-
-//     if (userId) {
-//       // ✅ Logged-in user
-//       query += ` WHERE a.user_id = ?`;
-//       params.push(userId);
-//     } else if (email) {
-//       // ✅ Guest user
-//       query += ` WHERE a.email = ?`;
-//       params.push(email);
-//     } else {
-//       return res.status(400).json({ message: "User not identified" });
-//     }
-
-//     query += ` ORDER BY a.created_at DESC`;
-
-//     const [rows] = await pool.query(query, params);
-
-//     return res.json(rows);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: "Something went wrong" });
-//   }
-// };
-
-
-// exports.getMyAppointments = async (req, res) => {
-//   try {
-//     const userId = req.user?.id || null; // if token middleware used
-//     const email = req.query.email || null;
-
-//     let query = `
-//       SELECT a.*, d.specialization
-//       FROM appointments a
-//       JOIN doctors d ON a.doctor_id = d.id
-//     `;
-
-//     let params = [];
-
-//     if (userId) {
-//       // ✅ Logged-in user
-//       query += ` WHERE a.user_id = ?`;
-//       params.push(userId);
-//     } else if (email) {
-//       // ✅ Guest user
-//       query += ` WHERE a.email = ?`;
-//       params.push(email);
-//     } else {
-//       return res.status(400).json({
-//         message: "Provide login token or email",
-//       });
-//     }
-
-//     query += ` ORDER BY a.created_at DESC`;
-
-//     const [rows] = await pool.query(query, params);
-
-//     res.json(rows);
-//   } catch (error) {
-//     console.error("Get appointments error:", error);
-//     res.status(500).json({ error: "Something went wrong" });
-//   }
-// };
-
-
-// exports.getMyAppointments = async (req, res) => {
-//   try {
-//     let userId = null;
-
-//     // ✅ Safely check token (optional auth)
-//     if (req.headers.authorization) {
-//       try {
-//         const decoded = jwt.verify(
-//           req.headers.authorization.split(" ")[1],
-//           process.env.JWT_SECRET
-//         );
-//         userId = decoded.id;
-//       } catch (err) {
-//         console.log("Invalid token");
-//       }
-//     }
-
-//     const email = req.query.email;
-
-//     // let query = `
-//     //   SELECT a.*, d.specialization
-//     //   FROM appointments a
-//     //   JOIN doctors d ON a.doctor_id = d.id
-//     // `;
-
-//     let query = `
-//   SELECT a.*, d.specialization
-//   FROM appointments a
-//   JOIN doctors d ON a.doctor_id = d.id
-//   `;
-
-//     let params = [];
-
-//     if (userId) {
-//       query += ` WHERE a.user_id = ?`;
-//       params.push(userId);
-//     } else if (email) {
-//       query += ` WHERE a.email = ?`;
-//       params.push(email);
-//     } else {
-//       return res.status(400).json({ message: "Provide login or email" });
-//     }
-
-//     query += ` ORDER BY a.created_at DESC`;
-
-//     const [rows] = await pool.query(query, params);
-
-//     console.log("RESULT:", rows); // 🔥 DEBUG
-
-//     res.json(rows);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: "Something went wrong" });
-//   }
-// };
-
-
 exports.getMyAppointments = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -772,37 +565,6 @@ exports.getMyAppointments = async (req, res) => {
   }
 };
 
-// exports.getMyAppointments = async (req, res) => {
-  
-//   try {
-//     const userId = req.user?.id;
-
-//     if (!userId) {
-//       return res.status(401).json({ message: "Unauthorized" });
-//     }
-
-//     const [rows] = await pool.query(
-//     `SELECT 
-//         a.*,
-//         d.specialization
-//       FROM 
-//         appointments a
-//       JOIN 
-//         doctors d ON a.doctor_id = d.id
-//       WHERE 
-//         a.user_id = ?
-        
-//       ORDER BY 
-//         a.created_at DESC`,
-//       [userId]
-//     );
-
-//     return res.json(rows);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: "Something went wrong" });
-//   }
-// };
 
 
 exports.getDoctorById = async (req, res) => {
@@ -820,26 +582,7 @@ exports.getDoctorById = async (req, res) => {
 };
 
 
-// exports.getAllDoctorsWithPatientCount = async (req, res) => {
-//   try {
-//     const [rows] = await pool.query(`
-//       SELECT d.id, d.name, COUNT(a.id) AS patientCount 
-//       FROM doctors d 
-//       LEFT JOIN appointments a ON d.id = a.doctor_id 
-//       GROUP BY d.id;
-//     `);
 
-//     const doctors = rows.map(row => ({
-//       ...row,
-//       patientCount: Number(row.patientCount) || 0,
-//     }));
-
-//     res.status(200).json({ doctors });
-//   } catch (err) {
-//     console.error("Error fetching doctors:", err);
-//     res.status(500).json({ message: "Database error" });
-//   }
-// };
 
 
 // -------------------- Get Doctor Daily Revenue + Patient Count --------------------
@@ -1001,37 +744,6 @@ exports.getWeekAppointmentsCount = async (req, res) => {
 
 
 
-// exports.cancelAppointmentByPatient = async (req, res) => {
-//   const { id } = req.params;  // appointment ID
-//   const userId = req.user?.id;
-
-//   if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-//   try {
-//     const [rows] = await pool.query(
-//       `SELECT * FROM appointments WHERE id = ? AND user_id = ? AND status = 'active'`,
-//       [id, userId]
-//     );
-
-//     if (rows.length === 0) {
-//       return res.status(404).json({ message: "Appointment not found or not active" });
-//     }
-
-//     await pool.query(
-//       `UPDATE appointments 
-//        SET status = 'cancelled' 
-//        WHERE id = ? AND user_id = ?`,
-//       [id, userId]
-//     );
-
-//     res.json({ message: "Appointment cancelled successfully" });
-
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
 
 // -------------------- Cancel Appointment --------------------
 exports.cancelAppointmentByPatient = async (req, res) => {
@@ -1062,23 +774,7 @@ exports.cancelAppointmentByPatient = async (req, res) => {
 };
 
 
-// controllers/appointmentsController.js
 
-// exports.getAllDoctorsWithPatientCount = async (req, res) => {
-//   try {
-//     const [doctors] = await pool.query(`
-//       SELECT d.id, d.name, d.specialization, d.hospital, COUNT(a.id) as totalAppointments
-//       FROM doctors d
-//       LEFT JOIN appointments a ON a.doctor_id = d.id
-//       GROUP BY d.id
-//     `);
-
-//     res.json({ doctors });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Error fetching doctors" });
-//   }
-// };
 
 // ✅ Final version: count active (non-cancelled) appointments per doctor
 exports.getAllDoctorsWithPatientCount = async (req, res) => {
@@ -1137,3 +833,591 @@ exports.getAppointmentsByDoctor = async (req, res) => {
     res.status(500).json({ error: "Failed to load appointments" });
   }
 };
+
+
+// exports.notifyDoctorArrived = async (req, res) => {
+//   const { doctorId, hospital, sessionDate, sessionTime } = req.body;
+
+//   try {
+//     const [appointments] = await pool.query(
+//       `SELECT * FROM appointments
+//        WHERE doctor_id = ? 
+//        AND hospital = ? 
+//        AND session_date = ? 
+//        AND session_time = ?
+//        AND status != 'cancelled'`,
+//       [doctorId, hospital, sessionDate, sessionTime]
+//     );
+
+//     for (const appt of appointments) {
+//       await emailService.sendDoctorArrivedEmail({
+//         patientName: appt.patient_name,
+//         email: appt.email,
+//         doctorName: appt.doctor_name,
+//         hospital: appt.hospital,
+//         sessionDate: appt.session_date,
+//         sessionTime: appt.session_time,
+//         appointmentNumber: appt.appointment_number,
+//         estimatedTime: appt.estimated_time,
+//       });
+//     }
+
+//     res.json({ message: "All patients notified successfully" });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Failed to notify patients" });
+//   }
+// }; 
+
+
+
+
+exports.notifyDoctorArrived = async (req, res) => {
+  try {
+    const { doctorId, hospital, sessionDate, sessionTime } = req.body;
+
+    console.log("📢 Doctor Arrived Triggered:", req.body);
+
+    // ✅ 1. GET ALL PATIENTS FOR THAT SESSION
+    const [appointments] = await pool.query(
+      `
+      SELECT 
+  a.*,
+  d.name AS doctor_name
+FROM appointments a
+JOIN doctors d ON d.id = a.doctor_id
+WHERE a.doctor_id = ?
+AND a.hospital = ?
+AND a.session_date = ?
+AND a.session_time = ?
+AND a.status != 'cancelled'
+ORDER BY a.appointment_number ASC
+      `,
+      [doctorId, hospital, sessionDate, sessionTime]
+    );
+
+    if (appointments.length === 0) {
+      return res.status(404).json({ message: "No patients found" });
+    }
+
+    // ✅ 2. LOOP + SEND EMAIL TO EACH PATIENT
+    for (let appt of appointments) {
+      await sendDoctorArrivedEmail({
+        patientName: appt.patient_name,
+        email: appt.email,
+        doctorName: appt.doctor_name, // make sure this exists
+        hospital: appt.hospital,
+        sessionDate: appt.session_date,
+        sessionTime: appt.session_time,
+        appointmentNumber: appt.appointment_number,
+        estimatedTime: appt.estimated_time || "Please wait",
+      });
+    }
+
+    console.log("✅ All patients notified");
+
+    res.json({ message: "All patients notified successfully" });
+  } catch (error) {
+    console.error("❌ Notify Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// exports.notifyPatientsDoctorArrived = async (req, res) => {
+//   const { doctorId, hospital, sessionDate, sessionTime } = req.body;
+
+//   if (!doctorId || !hospital || !sessionDate || !sessionTime) {
+//     return res.status(400).json({ message: "Missing required data" });
+//   }
+
+//   try {
+//     // 1. Get all active patients for this session
+//     const [patients] = await pool.query(
+//       `SELECT * FROM appointments
+//        WHERE doctor_id = ?
+//        AND hospital = ?
+//        AND session_date = ?
+//        AND session_time = ?
+//        AND status != 'cancelled'`,
+//       [doctorId, hospital, sessionDate, sessionTime]
+//     );
+
+//     if (patients.length === 0) {
+//       return res.status(404).json({ message: "No patients found" });
+//     }
+
+//     // 2. Send notification to each patient
+//     for (const patient of patients) {
+//       await emailService.sendDoctorArrivedEmail({
+//         patientName: patient.patient_name,
+//         email: patient.email,
+//         doctorName: patient.doctor_name,
+//         hospital: patient.hospital,
+//         sessionTime: patient.session_time,
+//       });
+//     }
+
+//     res.json({ message: "Patients notified successfully" });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+
+
+
+
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+    
+//     if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+//     const [rows] = await pool.query(
+//       `SELECT a.*, d.specialization
+//        FROM appointments a
+//        JOIN doctors d ON a.doctor_id = d.id
+//        WHERE a.user_id = ?
+//        ORDER BY a.created_at DESC`,
+//       [userId]
+//     );
+
+//     return res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+//     const email = req.query.email; // 👈 for guest
+
+//     let query = `
+//       SELECT a.*, d.specialization
+//       FROM appointments a
+//       JOIN doctors d ON a.doctor_id = d.id
+//     `;
+
+//     let params = [];
+
+//     if (userId) {
+//       // ✅ Logged-in user
+//       query += ` WHERE a.user_id = ?`;
+//       params.push(userId);
+//     } else if (email) {
+//       // ✅ Guest user
+//       query += ` WHERE a.email = ?`;
+//       params.push(email);
+//     } else {
+//       return res.status(400).json({ message: "User not identified" });
+//     }
+
+//     query += ` ORDER BY a.created_at DESC`;
+
+//     const [rows] = await pool.query(query, params);
+
+//     return res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id || null; // if token middleware used
+//     const email = req.query.email || null;
+
+//     let query = `
+//       SELECT a.*, d.specialization
+//       FROM appointments a
+//       JOIN doctors d ON a.doctor_id = d.id
+//     `;
+
+//     let params = [];
+
+//     if (userId) {
+//       // ✅ Logged-in user
+//       query += ` WHERE a.user_id = ?`;
+//       params.push(userId);
+//     } else if (email) {
+//       // ✅ Guest user
+//       query += ` WHERE a.email = ?`;
+//       params.push(email);
+//     } else {
+//       return res.status(400).json({
+//         message: "Provide login token or email",
+//       });
+//     }
+
+//     query += ` ORDER BY a.created_at DESC`;
+
+//     const [rows] = await pool.query(query, params);
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error("Get appointments error:", error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     let userId = null;
+
+//     // ✅ Safely check token (optional auth)
+//     if (req.headers.authorization) {
+//       try {
+//         const decoded = jwt.verify(
+//           req.headers.authorization.split(" ")[1],
+//           process.env.JWT_SECRET
+//         );
+//         userId = decoded.id;
+//       } catch (err) {
+//         console.log("Invalid token");
+//       }
+//     }
+
+//     const email = req.query.email;
+
+//     // let query = `
+//     //   SELECT a.*, d.specialization
+//     //   FROM appointments a
+//     //   JOIN doctors d ON a.doctor_id = d.id
+//     // `;
+
+//     let query = `
+//   SELECT a.*, d.specialization
+//   FROM appointments a
+//   JOIN doctors d ON a.doctor_id = d.id
+//   `;
+
+//     let params = [];
+
+//     if (userId) {
+//       query += ` WHERE a.user_id = ?`;
+//       params.push(userId);
+//     } else if (email) {
+//       query += ` WHERE a.email = ?`;
+//       params.push(email);
+//     } else {
+//       return res.status(400).json({ message: "Provide login or email" });
+//     }
+
+//     query += ` ORDER BY a.created_at DESC`;
+
+//     const [rows] = await pool.query(query, params);
+
+//     console.log("RESULT:", rows); // 🔥 DEBUG
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+
+// controllers/appointmentsController.js
+
+// exports.getAllDoctorsWithPatientCount = async (req, res) => {
+//   try {
+//     const [doctors] = await pool.query(`
+//       SELECT d.id, d.name, d.specialization, d.hospital, COUNT(a.id) as totalAppointments
+//       FROM doctors d
+//       LEFT JOIN appointments a ON a.doctor_id = d.id
+//       GROUP BY d.id
+//     `);
+
+//     res.json({ doctors });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Error fetching doctors" });
+//   }
+// };
+
+
+// exports.cancelAppointmentByPatient = async (req, res) => {
+//   const { id } = req.params;  // appointment ID
+//   const userId = req.user?.id;
+
+//   if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+//   try {
+//     const [rows] = await pool.query(
+//       `SELECT * FROM appointments WHERE id = ? AND user_id = ? AND status = 'active'`,
+//       [id, userId]
+//     );
+
+//     if (rows.length === 0) {
+//       return res.status(404).json({ message: "Appointment not found or not active" });
+//     }
+
+//     await pool.query(
+//       `UPDATE appointments 
+//        SET status = 'cancelled' 
+//        WHERE id = ? AND user_id = ?`,
+//       [id, userId]
+//     );
+
+//     res.json({ message: "Appointment cancelled successfully" });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+
+// exports.getAllDoctorsWithPatientCount = async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(`
+//       SELECT d.id, d.name, COUNT(a.id) AS patientCount 
+//       FROM doctors d 
+//       LEFT JOIN appointments a ON d.id = a.doctor_id 
+//       GROUP BY d.id;
+//     `);
+
+//     const doctors = rows.map(row => ({
+//       ...row,
+//       patientCount: Number(row.patientCount) || 0,
+//     }));
+
+//     res.status(200).json({ doctors });
+//   } catch (err) {
+//     console.error("Error fetching doctors:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
+
+
+
+// exports.getMyAppointments = async (req, res) => {
+  
+//   try {
+//     const userId = req.user?.id;
+
+//     if (!userId) {
+//       return res.status(401).json({ message: "Unauthorized" });
+//     }
+
+//     const [rows] = await pool.query(
+//     `SELECT 
+//         a.*,
+//         d.specialization
+//       FROM 
+//         appointments a
+//       JOIN 
+//         doctors d ON a.doctor_id = d.id
+//       WHERE 
+//         a.user_id = ?
+        
+//       ORDER BY 
+//         a.created_at DESC`,
+//       [userId]
+//     );
+
+//     return res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
+
+
+// -------------------- Get Doctor Sessions with Assigned Count --------------------
+// exports.getDoctorSessions = async (req, res) => {
+//   const { doctorId } = req.params;
+
+//   try {
+//     const [rows] = await pool.query(
+//       `SELECT 
+//           bf.id, 
+//           bf.hospital, 
+//           bf.session_date, 
+//           bf.session_time,
+//           COUNT(a.id) AS assigned_count
+//        FROM bookingform bf
+//        LEFT JOIN appointments a
+//          ON a.doctor_id = bf.doctor_id
+//          AND a.hospital = bf.hospital
+//          AND a.session_date = bf.session_date
+//          AND TIME(a.session_time) = TIME(bf.session_time)
+//          AND a.status != 'cancelled'
+//        WHERE bf.doctor_id = ?
+//        GROUP BY bf.id, bf.hospital, bf.session_date, bf.session_time
+//        ORDER BY bf.session_date, bf.session_time`,
+//       [doctorId]
+//     );
+
+//     res.json({ appointments: rows });
+//   } catch (err) {
+//     console.error("DB error:", err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
+
+
+
+
+
+// exports.getAppointmentsByDoctorId = async (req, res) => {
+//   const { doctorId } = req.params;
+
+//   try {
+//     const [rows] = await pool.query(
+//       "SELECT * FROM appointments WHERE doctor_id = ? ORDER BY session_date, session_time",
+//       [doctorId]
+//     );
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Failed to fetch appointments" });
+//   }
+// };
+
+// exports.getAppointmentsByDoctor = async (req, res) => {
+//   const { doctorId } = req.params;
+
+//   try {
+//     const [appointments] = await pool.query(
+//       `SELECT id, appointment_number, patient_name, hospital, session_date, session_time, email, phone, nic, status 
+//        FROM appointments 
+//        WHERE doctor_id = ?
+//        ORDER BY session_date, session_time`,
+//       [doctorId]
+//     );
+//     res.json(appointments);
+//   } catch (error) {
+//     console.error("Error fetching appointments:", error);
+//     res.status(500).json({ message: "Error fetching appointments" });
+//   }
+// };
+
+
+
+
+
+// exports.createAppointment = async (req, res) => {
+//   const {
+//     doctorId,
+//     doctorName,
+//     hospital,
+//     sessionDate,
+//     sessionTime,
+//     patientName,
+//     phone,
+//     country,
+//     nic,
+//     email,
+//     date,
+//     paymentId,
+//     bookingformId,
+//   } = req.body;
+
+//   if (!doctorId) {
+//     return res.status(400).json({ error: "Doctor ID missing, cannot book appointment." });
+//   }
+
+//   if (!hospital || !sessionDate || !sessionTime) {
+//     return res.status(400).json({ error: "Missing session data" });
+//   }
+
+//   if (!bookingformId) return res.status(400).json({ error: "Missing bookingform ID" });
+
+//   try {
+//     const userId = req.user?.id || null; 
+
+//      //  Duplicate check
+//     const [existing] = await pool.query(
+//       `SELECT id FROM appointments 
+//        WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND session_time = ?
+//        AND patient_name = ? AND nic = ? AND status != 'cancelled'`,
+//       [doctorId, hospital, sessionDate, sessionTime, patientName, nic]
+//     );
+
+//     if (existing.length > 0) {
+//       return res.status(409).json({ error: "You already have an active appointment for this time slot." });
+//     }
+
+
+//     // Check session availability
+// const [sessionRows] = await pool.query(
+//   "SELECT max_appointments FROM bookingform WHERE id = ?",
+//   [bookingformId]
+// );
+
+// if (!sessionRows.length) return res.status(404).json({ error: "Session not found" });
+
+// const maxAllowed = sessionRows[0].max_appointments;
+
+// // Count existing active bookings for this session
+// const [countRows] = await pool.query(
+//   `SELECT COUNT(*) AS count FROM appointments 
+//    WHERE bookingform_id = ? AND status != 'cancelled'`,
+//   [bookingformId]
+// );
+
+// if (countRows[0].count >= maxAllowed) {
+//   return res.status(409).json({ error: "This session is fully booked" });
+// }
+
+
+//     const [result] = await pool.query(
+//       `INSERT INTO appointments (
+//         doctor_id, doctor_name, hospital, session_date, session_time,
+//         patient_name, phone, country, nic, email, date, payment_id, user_id, bookingform_id
+//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         doctorId,
+//         doctorName,
+//         hospital,
+//         sessionDate,
+//         sessionTime,
+//         patientName,
+//         phone,
+//         country,
+//         nic,
+//         email,
+//         date,
+//         paymentId,
+//         userId,
+//         bookingformId,
+//       ]
+//     );
+
+   
+//     await emailService.sendAppointmentEmail({
+//       patientName,
+//       email,
+//       doctorName,
+//       hospital,
+//       sessionDate,
+//       sessionTime,
+//       phone,
+//       country,
+//       nic,
+//       charge: 2500,
+//     });
+
+//     res.status(201).json({ message: "Appointment created and email sent successfully" });
+//   } catch (error) {
+//     console.error("Create appointment error:", error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
