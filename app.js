@@ -187,6 +187,7 @@ const appointmentsRoutes = require("./routes/appointmentsRoutes");
 const bookingFormRoutes = require("./routes/bookingFormRoutes");
 const doctorSearchRoutes = require("./routes/doctorSearchRoutes");
 const sessionRoutes = require("./routes/session");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 
 app.use(cors());
@@ -216,6 +217,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/login", registerRoutes);
 app.use("/api/register", registerRoutes);
 app.use("/api", registerRoutes); // Contains login + register merged
+
+
+
 
 
 // --------------------------------------------------
@@ -256,6 +260,10 @@ app.use("/api/appointments", appointmentsRoutes);
 // --------------------------------------------------
 app.use("/api/bookingForm", bookingFormRoutes);
 app.use("/api/bookingform", doctorSearchRoutes); // Search route for booking form
+
+
+
+app.use("/api/notifications", notificationRoutes);
 
 
 // --------------------------------------------------

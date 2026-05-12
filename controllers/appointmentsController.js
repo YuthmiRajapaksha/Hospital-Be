@@ -80,6 +80,7 @@ exports.createAppointment = async (req, res) => {
   try {
     // const userId = req.user?.id || null;
     // const userId = req.body.userId;
+    // const userId = req.user?.id || null;
     const userId = req.user?.id || null;
 
        // ✅ ADD THIS HERE
@@ -395,6 +396,9 @@ exports.updateAppointment = async (req, res) => {
 //   }
 // };
 
+
+
+
 // -------------------- Delete Appointment --------------------
 exports.deleteAppointment = async (req, res) => {
   const { id } = req.params;
@@ -541,27 +545,48 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 
 
 
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+
+//     if (!userId) {
+//       return res.status(401).json({ message: "Unauthorized" });
+//     }
+
+//     const [rows] = await pool.query(
+//       `SELECT a.*, d.specialization
+//        FROM appointments a
+//        JOIN doctors d ON a.doctor_id = d.id
+//        WHERE a.user_id = ?
+//        ORDER BY a.created_at DESC`,
+//       [userId]
+//     );
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };
+
+
 exports.getMyAppointments = async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?.id || null;
 
     if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "Not logged in" });
     }
 
     const [rows] = await pool.query(
-      `SELECT a.*, d.specialization
-       FROM appointments a
-       JOIN doctors d ON a.doctor_id = d.id
-       WHERE a.user_id = ?
-       ORDER BY a.created_at DESC`,
+      `SELECT * FROM appointments WHERE user_id = ? ORDER BY id DESC`,
       [userId]
     );
 
     res.json(rows);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -586,31 +611,87 @@ exports.getDoctorById = async (req, res) => {
 
 
 // -------------------- Get Doctor Daily Revenue + Patient Count --------------------
+// exports.getDailyStatsByDoctor = async (req, res) => {
+//   const doctorId = req.params.id;
+
+//   try {
+//     const [rows] = await pool.query(
+//       `SELECT 
+//           session_date,
+//           COUNT(*) AS patient_count,
+//           (COUNT(*) * 2500) AS revenue
+//        FROM appointments
+//        WHERE doctor_id = ?
+//          AND status != 'cancelled'
+//        GROUP BY session_date
+//        ORDER BY session_date DESC`,
+//       [doctorId]
+//     );
+
+//     // res.json({ stats: rows });
+//     res.json({ dailyStats: rows });
+
+//   } catch (error) {
+//     console.error("Daily stats error:", error);
+//     res.status(500).json({ error: "Failed to fetch revenue and patient count" });
+//   }
+// };
+
+//payment view details
 exports.getDailyStatsByDoctor = async (req, res) => {
   const doctorId = req.params.id;
 
   try {
-    const [rows] = await pool.query(
-      `SELECT 
-          session_date,
-          COUNT(*) AS patient_count,
-          (COUNT(*) * 2500) AS revenue
-       FROM appointments
-       WHERE doctor_id = ?
-         AND status != 'cancelled'
-       GROUP BY session_date
-       ORDER BY session_date DESC`,
-      [doctorId]
-    );
+    const [rows] = await pool.query(`
+      SELECT 
+        DATE(appointment_date) AS date,
+        COUNT(*) AS patientCount,
+        COUNT(*) * 2500 AS totalRevenue
+      FROM appointments
+      WHERE doctor_id = ?
+        AND status != 'cancelled'
+        AND appointment_date >= CURDATE() - INTERVAL 30 DAY
+      GROUP BY DATE(appointment_date)
+      ORDER BY date DESC
+    `, [doctorId]);
 
-    // res.json({ stats: rows });
     res.json({ dailyStats: rows });
 
   } catch (error) {
-    console.error("Daily stats error:", error);
-    res.status(500).json({ error: "Failed to fetch revenue and patient count" });
+    console.error("Error fetching daily stats:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+
+// exports.getDailyStatsByDoctor = async (req, res) => {
+//   const doctorId = req.params.id;
+
+//   try {
+//     const [rows] = await pool.query(`
+//       SELECT 
+//         DATE(appointment_date) AS date,
+//         COUNT(*) AS patientCount,
+//         COUNT(*) * 2500 AS totalRevenue
+//       FROM appointments
+//       WHERE doctor_id = ?
+//         AND status != 'cancelled'
+//         AND appointment_date >= CURDATE() - INTERVAL 30 DAY
+//       GROUP BY DATE(appointment_date)
+//       ORDER BY date DESC
+//     `, [doctorId]);
+
+//     res.status(200).json({
+//       dailyStats: rows
+//     });
+
+//   } catch (error) {
+//     console.error("Daily stats error:", error);
+//     res.status(500).json({
+//       message: "Failed to fetch daily stats"
+//     });
+//   }
+// };
 
 
 exports.getAllDoctorsWithPatientCountAndRevenue = async (req, res) => {
@@ -619,17 +700,18 @@ exports.getAllDoctorsWithPatientCountAndRevenue = async (req, res) => {
       SELECT 
         d.id, 
         d.name, 
-        COUNT(a.id) AS patientCount,
+        COUNT(a.id) AS totalAppointments,
         COUNT(a.id) * 2500 AS totalRevenue
       FROM doctors d
-      LEFT JOIN appointments a ON d.id = a.doctor_id
-      AND a.status != 'cancelled'
+      LEFT JOIN appointments a 
+        ON d.id = a.doctor_id
+        AND a.status != 'cancelled'
       GROUP BY d.id
     `);
 
     res.status(200).json({ doctors: rows });
   } catch (err) {
-    console.error("Error fetching doctors with patient count:", err);
+    console.error("Error fetching doctors:", err);
     res.status(500).json({ message: "Database error" });
   }
 };
@@ -682,6 +764,8 @@ exports.getTodayAppointmentsCount = async (req, res) => {
   }
 };
 
+
+
 exports.getDailyStatsByDoctor = async (req, res) => {
   const doctorId = req.params.id;
 
@@ -705,6 +789,35 @@ exports.getDailyStatsByDoctor = async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 };
+
+
+
+
+// exports.getDailyStatsByDoctor = async (req, res) => {
+//   const doctorId = req.params.id;
+
+//   try {
+//     const [rows] = await pool.query(
+//       `SELECT 
+//           session_date,
+//           COUNT(*) AS patient_count,
+//           (COUNT(*) * 2500) AS revenue
+//        FROM appointments
+//        WHERE doctor_id = ?
+//          AND status != 'cancelled'
+//        GROUP BY session_date
+//        ORDER BY session_date DESC`,
+//       [doctorId]
+//     );
+
+//     // res.json({ stats: rows });
+//     res.json({ dailyStats: rows });
+
+//   } catch (error) {
+//     console.error("Daily stats error:", error);
+//     res.status(500).json({ error: "Failed to fetch revenue and patient count" });
+//   }
+// };
 
 
 
@@ -834,6 +947,21 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
+
+exports.getStatusCounts = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT status, COUNT(*) as count
+      FROM appointments
+      GROUP BY status
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("DB Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 // exports.notifyDoctorArrived = async (req, res) => {
 //   const { doctorId, hospital, sessionDate, sessionTime } = req.body;

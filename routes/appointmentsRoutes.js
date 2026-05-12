@@ -84,9 +84,18 @@ const appointmentsController = require("../controllers/appointmentsController");
 const authenticateToken = require("../middleware/authenticateToken");
 // Import the controller function
 const { changeAppointmentStatus } = require("../controllers/appointmentsController");
+const { getStatusCounts } = require("../controllers/appointmentsController"); // 👈 must be imported
+const authenticateTokenOptional = require("../middleware/authenticateTokenOptional");
 
 // Create appointment (allow without login)
-router.post("/", appointmentsController.createAppointment);
+// router.post("/",  appointmentsController.createAppointment);
+// router.post("/", authenticateToken, appointmentsController.createAppointment);
+
+// ✅ Booking (guest + logged)
+router.post("/", authenticateTokenOptional, appointmentsController.createAppointment);
+
+// Get logged-in user's appointments
+router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
 
 // // Get all doctors with patient count and revenue
 //  router.get("/api/doctors-with-patient-count", appointmentsController.getAllDoctorsWithPatientCountAndRevenue);
@@ -100,7 +109,9 @@ router.put("/:id/status", changeAppointmentStatus);
 // //Get patients with revenue
 router.get("/api/doctors/:id/daily-stats", appointmentsController.getDailyStatsByDoctor);
 
- router.get("/doctors-with-patient-count", appointmentsController.getAllDoctorsWithPatientCountAndRevenue);
+//  router.get("/doctors-with-patient-count", appointmentsController.getAllDoctorsWithPatientCountAndRevenue);
+
+router.get("/api/doctors-with-patient-count", appointmentsController.getAllDoctorsWithPatientCountAndRevenue);
 
 // Change appointment status (requires login)
 // router.put("/appointments/:id/status", authenticateToken, appointmentsController.changeAppointmentStatus);
@@ -121,8 +132,7 @@ router.get("/count/:doctorId", appointmentsController.countAppointments);
 // router.get("/api/doctors/:id/daily-stats", appointmentsController.getDailyStatsByDoctor);
 
 
-// Get logged-in user's appointments
-router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
+
 
 
 // router.post("/notify-doctor-arrived",appointmentsController.notifyPatientsDoctorArrived);
@@ -137,5 +147,12 @@ router.post(
 router.get("/count-all", appointmentsController.getTotalAppointmentsCount);
 router.get("/count-today", appointmentsController.getTodayAppointmentsCount);
 router.get("/count-week", appointmentsController.getWeekAppointmentsCount);
+
+
+
+// router.get("/doctor/:doctorId/status-count", appointmentsController.getStatusCounts);
+
+// ✅ No more :doctorId
+router.get("/status-count",appointmentsController. getStatusCounts);
 
 module.exports = router;

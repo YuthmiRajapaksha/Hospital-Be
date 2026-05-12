@@ -57,7 +57,7 @@ exports.sendAppointmentEmail = async ({
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
           }
           .header {
-            background-color: #0b5ed7;
+            background-color: #002a68;
             color: #ffffff;
             padding: 20px 30px;
             text-align: center;
@@ -72,7 +72,7 @@ exports.sendAppointmentEmail = async ({
           }
           .content h2 {
             margin-top: 0;
-            color: #0b5ed7;
+            color: #003f9c;
           }
           .details {
             margin: 20px 0;

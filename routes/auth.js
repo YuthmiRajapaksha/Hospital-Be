@@ -69,9 +69,32 @@ router.post("/send-otp", authController.sendOTP);
 router.post("/verify-otp", authController.verifyOTP);
 router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
-router.put("/change-password", authenticateToken, authController.changePassword);
+// router.put("/change-password", authenticateToken, authController.changePassword);
 router.get("/protected", authenticateToken, (req, res) => {
   res.json({ message: "Protected route accessed", user: req.user });
+});
+
+
+
+// router.get("/notifications", async (req, res) => {
+//   try {
+//     const [rows] = await db.query(`
+//       SELECT * FROM notifications 
+//       ORDER BY created_at DESC 
+//       LIMIT 5
+//     `);
+
+//     res.json(rows);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+router.get("/notifications", async (req, res) => {
+  const [rows] = await db.query(
+    "SELECT * FROM notifications ORDER BY created_at DESC"
+  );
+  res.json(rows);
 });
 
 
