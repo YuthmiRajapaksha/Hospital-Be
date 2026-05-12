@@ -293,6 +293,16 @@ exports.registerUser = async (req, res) => {
       [country, phone, email, title, firstName, lastName, idType, finalNIC, hashedPassword]
     );
 
+
+     // ✅ INSERT NOTIFICATION 🔥
+    const fullName = `${title || ""} ${firstName} ${lastName}`.trim();
+
+    await db.query(
+      `INSERT INTO notifications (message, user_name, created_at)
+       VALUES (?, ?, NOW())`,
+      ["New patient registered", fullName]
+    );
+
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
     console.error("Register error:", err);
@@ -507,3 +517,65 @@ exports.verifyOTP = async (req, res) => {
   return res.status(400).json({ message: "Invalid or expired OTP" });
 };
 
+
+
+
+
+exports.changeUserPassword = async (req, res) => {
+  console.log("req.user:", req.user);
+
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const { currentPassword, newPassword } = req.body;
+
+  const userId = req.user.id;
+
+  try {
+    // Get user from database
+    const [rows] = await pool.query(
+      "SELECT * FROM users WHERE id = ?",
+      [userId]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Compare current password
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [hashedPassword, userId]
+    );
+
+    res.json({
+      success: true,
+      message: "Password changed successfully",
+    });
+
+  } catch (err) {
+    console.error("Password change error:", err);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};

@@ -67,6 +67,16 @@ const [result] = await pool.query(
     photo,
   ]
 );
+
+// ✅ 🔥 ADD NOTIFICATION
+    await pool.query(
+      `INSERT INTO notifications (message, user_name, created_at)
+       VALUES (?, ?, NOW())`,
+      [
+        "New doctor added",
+        `Dr. ${name}`,
+      ]
+    );
     await emailService.sendDoctorCredentials({
       name,
       email,

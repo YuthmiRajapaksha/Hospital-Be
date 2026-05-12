@@ -22,21 +22,41 @@
 
 
 // Example middleware
+// const jwt = require("jsonwebtoken");
+
+// const authenticateToken = (req, res, next) => {
+//   const authHeader = req.headers["authorization"];
+//   const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
+
+//   if (!token) return res.status(401).json({ message: "No token provided" });
+
+//   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+//     if (err) return res.status(403).json({ message: "Invalid token" });
+    
+//     req.user = decoded; // decoded should contain userId and other info
+//     next();
+//   });
+// };
+// module.exports = authenticateToken;
+
+
 const jwt = require("jsonwebtoken");
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
 
-  if (!token) return res.status(401).json({ message: "No token provided" });
+  const token = authHeader && authHeader.split(" ")[1];
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+  if (!token) return res.status(401).json({ message: "No token" });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
-    
-    req.user = decoded; // decoded should contain userId and other info
+
+    req.user = user; // 👈 THIS MUST contain id
     next();
   });
 };
+
 module.exports = authenticateToken;
 
 
