@@ -113,6 +113,7 @@
 
 const express = require("express");
 const router = express.Router();
+const otpStore = require("../utils/otpStore");
 
 router.post("/verify-otp", (req, res) => {
   let { email, otp } = req.body;
@@ -121,17 +122,9 @@ router.post("/verify-otp", (req, res) => {
     return res.status(400).json({ success: false, message: "Email and OTP required" });
   }
 
-  const emailKey = email.trim().toLowerCase();
-
-  if (!global.otpStore || !global.otpStore[emailKey]) {
-    return res.status(400).json({ success: false, message: "OTP expired or email not found" });
+  if (!otpStore.verifyOtp(email, otp)) {
+    return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
   }
-
-  if (String(global.otpStore[emailKey]) !== String(otp)) {
-    return res.status(400).json({ success: false, message: "Invalid OTP" });
-  }
-
-  delete global.otpStore[emailKey];
 
   return res.json({ success: true, message: "OTP verified successfully" });
 });

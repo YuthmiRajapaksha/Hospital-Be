@@ -169,7 +169,6 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const path = require("path");
 
 // DB
@@ -191,8 +190,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 
 
 app.use(cors());
-app.use(express.json());  
-app.use(bodyParser.json());
+app.use(express.json());
 
 const sendPin = require("./routes/sendPin");
 const otpVerify = require("./routes/otpVerify");
@@ -288,6 +286,9 @@ app.get("/api/search", async (req, res) => {
     params.push(`%${hospital}%`);
   }
 
+  // Cap the result set to avoid loading the whole doctors table into memory.
+  query += " LIMIT 200";
+
   try {
     const [rows] = await db.execute(query, params);
     res.json({ doctors: rows });
@@ -328,6 +329,30 @@ app.get("/api/appointments/doctor/:doctorId", async (req, res) => {
 // --------------------------------------------------
 // ✅ START SERVER
 // --------------------------------------------------
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+// --------------------------------------------------
+// ✅ 404 + ERROR HANDLER
+// Without a final error handler, an exception thrown inside an async route
+// (e.g. a ReferenceError) becomes an unhandled rejection and the request never
+// gets a response — the socket/req/res objects linger, leaking memory under
+// repeated calls. This catches sync errors and keeps responses bounded.
+// --------------------------------------------------
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err.message);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "Server error" });
+});
+
+// Log (instead of crash) on stray async rejections so one bad request can't
+// take the whole process down.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason && reason.message ? reason.message : reason);
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });

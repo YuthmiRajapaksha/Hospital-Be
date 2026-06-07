@@ -5,7 +5,13 @@ const path = require('path');
 
 exports.getAllReports = async (req, res) => {
   try {
-    const [results] = await db.query("SELECT * FROM lab_reports ORDER BY id DESC");
+    // Cap the result set so a large table can't load entirely into memory.
+    const limit = Math.min(Number(req.query.limit) || 200, 500);
+    const offset = Number(req.query.offset) || 0;
+    const [results] = await db.query(
+      "SELECT * FROM lab_reports ORDER BY id DESC LIMIT ? OFFSET ?",
+      [limit, offset]
+    );
     res.status(200).json(results);
   } catch (err) {
     console.error("Error getting reports:", err);

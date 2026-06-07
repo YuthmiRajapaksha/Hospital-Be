@@ -173,6 +173,7 @@
 const express = require("express");
 const router = express.Router();
 const { sendOTPEmail } = require("../utils/emailService");
+const otpStore = require("../utils/otpStore");
 
 router.post("/send-otp", async (req, res) => {
   try {
@@ -182,25 +183,18 @@ router.post("/send-otp", async (req, res) => {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const emailKey = email.trim().toLowerCase();
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    global.otpStore = global.otpStore || {};
-    global.otpStore[emailKey] = otp;
-
-    // Auto expire in 5 min
-    setTimeout(() => {
-      delete global.otpStore[emailKey];
-      console.log("OTP expired:", emailKey);
-    }, 5 * 60 * 1000);
+    // Store in the bounded shared store (auto-expires; one sweep timer for the
+    // whole process instead of a setTimeout per request).
+    otpStore.setOtp(email, otp);
 
     await sendOTPEmail(email, otp);
 
     return res.json({ success: true, message: "OTP sent successfully!" });
 
   } catch (error) {
-    console.error("OTP send error:", error);
+    console.error("OTP send error:", error.message);
     return res.status(500).json({ success: false, message: "Failed to send OTP" });
   }
 });

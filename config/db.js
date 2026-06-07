@@ -18,8 +18,14 @@ const pool = mysql.createPool({
 });
 
 async function setupDatabase() {
+  let connection;
   try {
-    await pool.getConnection();
+    // Acquire a connection just to verify connectivity, then release it back
+    // to the pool. The previous code never released it, permanently leaking
+    // one of the pool's connections on every startup/restart.
+    connection = await pool.getConnection();
+    connection.release();
+    connection = undefined;
     console.log('✅ Connected to hospital_db database.');
 
     // DOCTORS TABLE
@@ -169,6 +175,8 @@ async function setupDatabase() {
 
   } catch (err) {
     console.error('❌ Database setup failed:', err.message);
+  } finally {
+    if (connection) connection.release();
   }
 }
 

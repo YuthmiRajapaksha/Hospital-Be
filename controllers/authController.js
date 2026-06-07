@@ -173,6 +173,8 @@ const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const otpStore = require("../utils/otpStore");
+const { sendOTPEmail } = require("../utils/emailService");
 
 // -------------------------------
 // ADMIN + DOCTOR LOGIN
@@ -451,9 +453,6 @@ exports.changePassword = async (req, res) => {
 };
 
 
-// Store OTP temporarily (in-memory)
-// let otpStore = {};  
-
 exports.sendOTP = async (req, res) => {
   const { email } = req.body;
 
@@ -461,45 +460,18 @@ exports.sendOTP = async (req, res) => {
     return res.status(400).json({ message: "Email is required" });
   }
 
-  // Generate 6-digit OTP
+  // Generate 6-digit OTP and save it in the bounded shared store.
   const otp = crypto.randomInt(100000, 999999).toString();
+  otpStore.setOtp(email, otp);
 
-  // Save temporarily (better to store in DB for production)
-  otpStore[email] = otp;
-
-  // Email template
-  const mailOptions = {
-    from: "noreply@medicare.com",
-    to: email,
-    subject: "Your OTP Code for Signup",
-    html: `
-      <div style="background:#f5f7fa;padding:20px;font-family:Arial">
-        <div style="max-width:600px;background:#fff;padding:30px;margin:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)">
-          <h2 style="text-align:center;color:#0b5ed7">Your Verification Code</h2>
-
-          <p>Hello,</p>
-          <p>Your OTP for signup verification is:</p>
-
-          <h1 style="text-align:center; letter-spacing:5px; color:#0b5ed7;">
-            ${otp}
-          </h1>
-
-          <p>This OTP will expire in <strong>5 minutes</strong>.</p>
-
-          <p style="margin-top:30px;">Thank you,<br/>MediCare Hospital</p>
-        </div>
-      </div>
-    `,
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log("❌ Error sending OTP:", error);
-      return res.status(500).json({ message: "OTP sending failed" });
-    }
-    console.log("✅ OTP sent:", otp);
+  try {
+    await sendOTPEmail(email, otp);
+    console.log("✅ OTP sent:", email);
     return res.json({ success: true, message: "OTP sent successfully" });
-  });
+  } catch (error) {
+    console.error("❌ Error sending OTP:", error.message);
+    return res.status(500).json({ message: "OTP sending failed" });
+  }
 };
 
 exports.verifyOTP = async (req, res) => {
@@ -509,8 +481,7 @@ exports.verifyOTP = async (req, res) => {
     return res.status(400).json({ message: "Email and OTP required" });
   }
 
-  if (otpStore[email] && otpStore[email] === otp) {
-    delete otpStore[email]; // remove after verifying
+  if (otpStore.verifyOtp(email, otp)) {
     return res.json({ success: true, message: "OTP verified" });
   }
 

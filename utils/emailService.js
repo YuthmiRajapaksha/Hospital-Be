@@ -13,6 +13,12 @@ const transporter = nodemailer.createTransport({
   host: "localhost",
   port: 1025,
   ignoreTLS: true,
+  // Bound how long a send can block. Without these, if the SMTP server is
+  // down or slow, request handlers that `await transporter.sendMail(...)` hang
+  // forever, holding req/res objects open and bloating memory under load.
+  connectionTimeout: 5000,
+  greetingTimeout: 5000,
+  socketTimeout: 10000,
 });
 
 
@@ -122,13 +128,12 @@ exports.sendAppointmentEmail = async ({
     `,
   };
 
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log('❌ Email send failed:', error);
-    } else {
-      console.log('✅ Email sent:', info.response);
-    }
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent:', info.response);
+  } catch (error) {
+    console.log('❌ Email send failed:', error.message);
+  }
 };
 
 
@@ -192,13 +197,12 @@ exports.sendCancellationEmail = async ({
     `,
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('❌ Failed to send cancellation email:', error);
-    } else {
-      console.log('✅ Cancellation email sent:', info.response);
-    }
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Cancellation email sent:', info.response);
+  } catch (error) {
+    console.error('❌ Failed to send cancellation email:', error.message);
+  }
 };
 
 
@@ -274,13 +278,12 @@ exports.sendDoctorCredentials = async ({ name, email, userName, password }) => {
 `
   };
 
-  await transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('❌ Failed to send doctor credentials:', error);
-    } else {
-      console.log('✅ Doctor credentials email sent:', info.response);
-    }
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Doctor credentials email sent:', info.response);
+  } catch (error) {
+    console.error('❌ Failed to send doctor credentials:', error.message);
+  }
 };
 
 
