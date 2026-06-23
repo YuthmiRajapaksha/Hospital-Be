@@ -570,23 +570,85 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 // };
 
 
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     const userId = req.user?.id || null;
+
+//     if (!userId) {
+//       return res.status(401).json({ message: "Not logged in" });
+//     }
+
+//     const [rows] = await pool.query(
+//       `SELECT * FROM appointments WHERE user_id = ? ORDER BY id DESC`,
+//       [userId]
+//     );
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// };
+
+// exports.getMyAppointments = async (req, res) => {
+//   try {
+//     console.log("req.user =", req.user);
+
+//     const userId = req.user?.id;
+
+//     const [rows] = await pool.query(
+//       "SELECT * FROM appointments WHERE user_id = ?",
+//       [userId]
+//     );
+
+//     console.log("Found rows:", rows);
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+
 exports.getMyAppointments = async (req, res) => {
   try {
-    const userId = req.user?.id || null;
+    console.log("req.user =", req.user);
 
-    if (!userId) {
-      return res.status(401).json({ message: "Not logged in" });
-    }
+    const userId = req.user?.id; // may need to be req.user.userId
+
+    console.log("userId =", userId);
 
     const [rows] = await pool.query(
-      `SELECT * FROM appointments WHERE user_id = ? ORDER BY id DESC`,
+      "SELECT * FROM appointments WHERE user_id = ?",
+      [userId]
+    );
+
+    console.log("Found rows:", rows);
+
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+
+exports.getAppointmentsByUserId = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const [rows] = await pool.query(
+      "SELECT * FROM appointments WHERE user_id = ?",
       [userId]
     );
 
     res.json(rows);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ message: "Server Error",
+      error: error.message, });
   }
 };
 
