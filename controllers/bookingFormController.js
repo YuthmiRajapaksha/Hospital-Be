@@ -267,30 +267,78 @@
 //   }
 // };
 
-exports.getAppointmentsByDoctor = async (req, res) => {
-  const { doctorId } = req.params;
-  try {
-    const [sessions] = await db.query(
-      `SELECT b.*, 
-              COALESCE(a.total, 0) AS assigned_count
-       FROM bookingForm b
-       LEFT JOIN (
-         SELECT bookingform_id, COUNT(*) AS total
-         FROM appointments
-         WHERE status='active'
-         GROUP BY bookingform_id
-       ) a ON a.bookingform_id = b.id
-       WHERE b.doctor_id = ?
-       ORDER BY b.session_date ASC, b.session_time ASC`,
-      [doctorId]
-    );
-    res.json({ appointments: sessions });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Database error" });
-  }
-};
+// exports.getAppointmentsByDoctor = async (req, res) => {
+//   const { doctorId } = req.params;
 
+//   try {
+//     // Get all sessions with booking count
+//     const [sessions] = await db.query(
+//       `
+//       SELECT
+//         b.id,
+//         b.doctor_id,
+//         b.hospital,
+//         b.session_date,
+//         b.session_time,
+//         b.max_appointments,
+//         COUNT(a.id) AS assigned_count
+//       FROM bookingForm b
+//       LEFT JOIN appointments a
+//         ON a.bookingform_id = b.id
+//         AND a.status != 'cancelled'
+//       WHERE b.doctor_id = ?
+//       GROUP BY
+//         b.id,
+//         b.doctor_id,
+//         b.hospital,
+//         b.session_date,
+//         b.session_time,
+//         b.max_appointments
+//       ORDER BY
+//         b.session_date ASC,
+//         b.session_time ASC
+//       `,
+//       [doctorId]
+//     );
+
+//     // Get all appointments belonging to those sessions
+//     const sessionIds = sessions.map((s) => s.id);
+
+//     let assigned = [];
+
+//     if (sessionIds.length > 0) {
+//       const [rows] = await db.query(
+//         `
+//         SELECT *
+//         FROM appointments
+//         WHERE bookingform_id IN (?)
+//         AND status != 'cancelled'
+//         `,
+//         [sessionIds]
+//       );
+
+//       assigned = rows;
+//     }
+
+//     // Attach appointments to each session
+//     const sessionMap = sessions.map((session) => ({
+//       ...session,
+//       assignedAppointments: assigned.filter(
+//         (a) => a.bookingform_id === session.id
+//       ),
+//     }));
+
+//     res.json({
+//       appointments: sessionMap,
+//     });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({
+//       message: "Database error",
+//     });
+//   }
+// };
 
 
 // exports.updateAppointment = async (req, res) => {
@@ -587,46 +635,113 @@ exports.getAvailableSessions = async (req, res) => {
 // bookingFormController.js
 
 // bookingFormController.js
+// exports.getAppointmentsByDoctor = async (req, res) => {
+//   const { doctorId } = req.params;
+
+//   try {
+//     const [sessions] = await db.query(
+//       `SELECT b.*, 
+//               COALESCE(a.total, 0) AS activeCount
+//        FROM bookingForm b
+//        LEFT JOIN (
+//          SELECT bookingform_id, COUNT(*) AS total
+//          FROM appointments
+//          WHERE status='active'
+//          GROUP BY bookingform_id
+//        ) a ON a.bookingform_id = b.id
+//        WHERE b.doctor_id = ?
+//        ORDER BY b.session_date ASC, b.session_time ASC`,
+//       [doctorId]
+//     );
+
+//     // Fetch all appointments linked to these sessions
+//     const sessionIds = sessions.map((s) => s.id);
+//     const [assigned] = await db.query(
+//       `SELECT * FROM appointments 
+//        WHERE bookingform_id IN (?) AND status='active'`,
+//       [sessionIds]
+//     );
+
+//     // Map appointments under their session
+//     const sessionMap = sessions.map((s) => ({
+//       ...s,
+//       assignedAppointments: assigned.filter((a) => a.bookingform_id === s.id),
+//     }));
+
+//     res.json({ appointments: sessionMap });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Database error" });
+//   }
+// };
+
+
 exports.getAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
 
   try {
     const [sessions] = await db.query(
-      `SELECT b.*, 
-              COALESCE(a.total, 0) AS activeCount
-       FROM bookingForm b
-       LEFT JOIN (
-         SELECT bookingform_id, COUNT(*) AS total
-         FROM appointments
-         WHERE status='active'
-         GROUP BY bookingform_id
-       ) a ON a.bookingform_id = b.id
-       WHERE b.doctor_id = ?
-       ORDER BY b.session_date ASC, b.session_time ASC`,
+      `
+      SELECT
+        b.id,
+        b.doctor_id,
+        b.hospital,
+        b.session_date,
+        b.session_time,
+        b.max_appointments,
+        COUNT(a.id) AS assigned_count
+      FROM bookingForm b
+      LEFT JOIN appointments a
+        ON a.bookingform_id = b.id
+      WHERE b.doctor_id = ?
+      GROUP BY
+        b.id,
+        b.doctor_id,
+        b.hospital,
+        b.session_date,
+        b.session_time,
+        b.max_appointments
+      ORDER BY
+        b.session_date ASC,
+        b.session_time ASC
+      `,
       [doctorId]
     );
 
-    // Fetch all appointments linked to these sessions
     const sessionIds = sessions.map((s) => s.id);
-    const [assigned] = await db.query(
-      `SELECT * FROM appointments 
-       WHERE bookingform_id IN (?) AND status='active'`,
-      [sessionIds]
-    );
 
-    // Map appointments under their session
-    const sessionMap = sessions.map((s) => ({
-      ...s,
-      assignedAppointments: assigned.filter((a) => a.bookingform_id === s.id),
+    let assigned = [];
+
+    if (sessionIds.length > 0) {
+      const [rows] = await db.query(
+        `
+        SELECT *
+        FROM appointments
+        WHERE bookingform_id IN (?)
+        `,
+        [sessionIds]
+      );
+
+      assigned = rows;
+    }
+
+    const sessionMap = sessions.map((session) => ({
+      ...session,
+      assignedAppointments: assigned.filter(
+        (a) => Number(a.bookingform_id) === Number(session.id)
+      ),
     }));
 
-    res.json({ appointments: sessionMap });
+    res.json({
+      appointments: sessionMap,
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Database error" });
+    res.status(500).json({
+      message: "Database error",
+    });
   }
 };
-
 
 
 

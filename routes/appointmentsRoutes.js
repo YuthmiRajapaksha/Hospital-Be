@@ -138,6 +138,8 @@ router.get("/count/:doctorId", appointmentsController.countAppointments);
 
 // router.post("/notify-doctor-arrived",appointmentsController.notifyPatientsDoctorArrived);
 
+console.log("Registering notify-doctor-arrived route");
+
 router.post(
   "/notify-doctor-arrived",
 //   authenticateToken,
