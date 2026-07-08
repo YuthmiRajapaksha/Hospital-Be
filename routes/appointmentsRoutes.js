@@ -96,6 +96,7 @@ router.post("/", authenticateTokenOptional, appointmentsController.createAppoint
 
 // Get logged-in user's appointments
 router.get("/my", authenticateToken, appointmentsController.getMyAppointments);
+router.get("/my/:id", appointmentsController.getAppointmentsByUserId);
 
 // // Get all doctors with patient count and revenue
 //  router.get("/api/doctors-with-patient-count", appointmentsController.getAllDoctorsWithPatientCountAndRevenue);
@@ -136,6 +137,8 @@ router.get("/count/:doctorId", appointmentsController.countAppointments);
 
 
 // router.post("/notify-doctor-arrived",appointmentsController.notifyPatientsDoctorArrived);
+
+console.log("Registering notify-doctor-arrived route");
 
 router.post(
   "/notify-doctor-arrived",

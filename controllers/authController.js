@@ -534,7 +534,7 @@ exports.changeUserPassword = async (req, res) => {
 
   try {
     // Get user from database
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       "SELECT * FROM users WHERE id = ?",
       [userId]
     );
@@ -561,7 +561,7 @@ exports.changeUserPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password
-    await pool.query(
+    await db.query(
       "UPDATE users SET password = ? WHERE id = ?",
       [hashedPassword, userId]
     );
