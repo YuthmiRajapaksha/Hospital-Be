@@ -292,28 +292,293 @@ exports.sendAppointmentUpdateEmail = async ({
   sessionDate,
   sessionTime,
 }) => {
-  const subject = "Update: Your Appointment Details Changed";
 
-  const html = `
-    <p>Dear ${patientName},</p>
-    <p>This is to inform you that your appointment session details have been updated. Please see the new details below:</p>
-    <ul>
-      <li><strong>Doctor:</strong> Dr. ${doctorName}</li>
-      <li><strong>Hospital:</strong> ${hospital}</li>
-      <li><strong>New Date:</strong> ${sessionDate}</li>
-      <li><strong>New Time:</strong> ${sessionTime}</li>
-    </ul>
-    <p>Please contact us if you have any questions.</p>
-    <p>Thank you for your understanding.</p>
-  `;
-
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
+  const mailOptions = {
+    from: 'nirajapaksha1998@gmail.com',
     to: email,
-    subject,
-    html,
-  });
+    subject: "Appointment Schedule Updated",
+
+    html: `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+      <title>Appointment Updated</title>
+
+      <style>
+        body {
+          background-color: #f5f7fa;
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+        }
+
+        .email-container {
+          max-width: 600px;
+          margin: 30px auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .header {
+          background-color: #2B909B;
+          color: white;
+          padding: 20px 30px;
+          text-align: center;
+        }
+
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+        }
+
+        .content {
+          padding: 30px;
+          color: #333;
+        }
+
+        .content h2 {
+          color: #2B909B;
+          margin-top: 0;
+        }
+
+        .details {
+          margin: 20px 0;
+          background: #f8fafa;
+          padding: 15px;
+          border-radius: 6px;
+        }
+
+        .details p {
+          margin: 10px 0;
+          line-height: 1.5;
+        }
+
+        .highlight {
+          color: #2B909B;
+          font-weight: bold;
+        }
+
+        .message {
+          background: #e8f6f7;
+          padding: 15px;
+          border-left: 4px solid #2B909B;
+          border-radius: 4px;
+          margin-bottom: 20px;
+        }
+
+        .footer {
+          background-color: #f0f0f0;
+          padding: 20px 30px;
+          text-align: center;
+          font-size: 12px;
+          color: #777;
+        }
+
+      </style>
+
+    </head>
+
+
+    <body>
+
+      <div class="email-container">
+
+
+        <div class="header">
+          <h1>Appointment Updated</h1>
+        </div>
+
+
+
+        <div class="content">
+
+          <h2>Dear ${patientName},</h2>
+
+
+          <div class="message">
+            <p>
+              Your appointment schedule has been updated successfully.
+              Please check your new appointment details below.
+            </p>
+          </div>
+
+
+
+          <div class="details">
+
+            <p>
+              <strong>Doctor:</strong>
+              Dr. ${doctorName}
+            </p>
+
+
+            <p>
+              <strong>Hospital:</strong>
+              ${hospital} MediCare Hospital
+            </p>
+
+
+            <p>
+              <strong>New Session Date:</strong>
+              <span class="highlight">
+                ${sessionDate}
+              </span>
+            </p>
+
+
+            <p>
+              <strong>New Session Time:</strong>
+              <span class="highlight">
+                ${sessionTime}
+              </span>
+            </p>
+
+          </div>
+
+
+
+          <p>
+            Please arrive 15 minutes before your appointment time.
+          </p>
+
+
+          <p>
+            Thank you for choosing MediCare Hospital.
+          </p>
+
+
+        </div>
+
+
+
+        <div class="footer">
+          &copy; 2025 MediCare Hospital. All rights reserved.
+        </div>
+
+
+      </div>
+
+
+    </body>
+    </html>
+    `,
+  };
+
+
+  await transporter.sendMail(mailOptions);
+
 };
+
+// exports.sendAppointmentUpdateEmail = async ({
+//   patientName,
+//   email,
+//   doctorName,
+//   hospital,
+//   sessionDate,
+//   sessionTime,
+// }) => {
+//   await transporter.sendMail({
+//     from: process.env.EMAIL_USER,
+//     to: email,
+//     subject: "Appointment Schedule Updated",
+//     html: `
+//       <h2>Appointment Updated</h2>
+
+//       <p>Dear <b>${patientName}</b>,</p>
+
+//       <p>Your appointment has been updated.</p>
+
+//       <table border="1" cellpadding="8" cellspacing="0">
+//         <tr>
+//           <td><b>Doctor</b></td>
+//           <td>${doctorName}</td>
+//         </tr>
+//         <tr>
+//           <td><b>Hospital</b></td>
+//           <td>${hospital}</td>
+//         </tr>
+//         <tr>
+//           <td><b>Date</b></td>
+//           <td>${sessionDate}</td>
+//         </tr>
+//         <tr>
+//           <td><b>Time</b></td>
+//           <td>${sessionTime}</td>
+//         </tr>
+//       </table>
+
+//       <p>Please arrive 15 minutes early.</p>
+
+//       <p>Thank you.</p>
+//     `,
+//   });
+// };
+
+// exports.sendAppointmentUpdateEmail = async ({
+//   patientName,
+//   email,
+//   doctorName,
+//   hospital,
+//   sessionDate,
+//   sessionTime,
+// }) => {
+//   const subject = "Update: Your Appointment Details Changed";
+
+//   const html = `
+//     <p>Dear ${patientName},</p>
+//     <p>This is to inform you that your appointment session details have been updated. Please see the new details below:</p>
+//     <ul>
+//       <li><strong>Doctor:</strong> Dr. ${doctorName}</li>
+//       <li><strong>Hospital:</strong> ${hospital}</li>
+//       <li><strong>New Date:</strong> ${sessionDate}</li>
+//       <li><strong>New Time:</strong> ${sessionTime}</li>
+//     </ul>
+//     <p>Please contact us if you have any questions.</p>
+//     <p>Thank you for your understanding.</p>
+//   `;
+
+//   await transporter.sendMail({
+//     from: process.env.EMAIL_FROM,
+//     to: email,
+//     subject,
+//     html,
+//   });
+// };
+
+// exports.sendAppointmentUpdateEmail = async ({
+//   patientName,
+//   email,
+//   doctorName,
+//   hospital,
+//   sessionDate,
+//   sessionTime,
+// }) => {
+//   const subject = "Update: Your Appointment Details Changed";
+
+//   const html = `
+//     <p>Dear ${patientName},</p>
+//     <p>This is to inform you that your appointment session details have been updated. Please see the new details below:</p>
+//     <ul>
+//       <li><strong>Doctor:</strong> Dr. ${doctorName}</li>
+//       <li><strong>Hospital:</strong> ${hospital}</li>
+//       <li><strong>New Date:</strong> ${sessionDate}</li>
+//       <li><strong>New Time:</strong> ${sessionTime}</li>
+//     </ul>
+//     <p>Please contact us if you have any questions.</p>
+//     <p>Thank you for your understanding.</p>
+//   `;
+
+//   await transporter.sendMail({
+//     from: process.env.EMAIL_FROM,
+//     to: email,
+//     subject,
+//     html,
+//   });
+// };
 
 
 // exports.sendOTPEmail = async (to, subject, text) => {
