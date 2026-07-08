@@ -1,7 +1,7 @@
 
 const pool = require("../config/db");
 const emailService = require("../utils/emailService");
-const { sendDoctorArrivedEmail } = require("../utils/emailService");
+const { sendDoctorArrivedEmail,sendAppointmentUpdateEmail, } = require("../utils/emailService");
 
 
 exports.bookAppointment = async (req, res) => {
@@ -263,6 +263,175 @@ exports.getDoctorById = async (req, res) => {
 // const { sendAppointmentUpdateEmail } = require("../utils/emailService");
 
 
+// exports.updateAppointment = async (req, res) => {
+//   const { id } = req.params;
+//   const { hospital, session_date, session_time } = req.body;
+
+//   try {
+//     console.log("🔥 UPDATE API HIT");
+
+//     // 1. get old session
+//     const [oldSession] = await pool.query(
+//       "SELECT * FROM bookingform WHERE id=?",
+//       [id]
+//     );
+
+//     const old = oldSession[0];
+
+//     // 2. update session
+//     await pool.query(
+//       "UPDATE bookingform SET hospital=?, session_date=?, session_time=? WHERE id=?",
+//       [hospital, session_date, session_time, id]
+//     );
+
+//     // 3. get patients
+//     const [patients] = await pool.query(
+//       `SELECT * FROM appointments
+//        WHERE doctor_id = ?
+//        AND hospital = ?
+//        AND session_date = ?
+//        AND TIME(session_time) = TIME(?)
+//        AND status != 'cancelled'`,
+//       [old.doctor_id, old.hospital, old.session_date, old.session_time]
+//     );
+
+//     console.log("👥 Patients found:", patients.length);
+
+//     // 4. send emails
+//     for (let p of patients) {
+//       console.log("📧 Sending email to:", p.email);
+
+//       await sendAppointmentUpdateEmail({
+//         patientName: p.patient_name,
+//         email: p.email,
+//         doctorName: p.doctor_name || "Doctor",
+//         hospital,
+//         sessionDate: session_date,
+//         sessionTime: session_time,
+//       });
+//     }
+
+//     res.json({ message: "Updated + emails sent" });
+
+//   } catch (err) {
+//     console.error("❌ ERROR:", err);
+//     res.status(500).json({ message: "Error" });
+//   }
+// };
+
+
+
+// ✅ Update a session + notify patients
+// exports.updateAppointment = async (req, res) => {
+//   const { id } = req.params;
+//   const { hospital, session_date, session_time } = req.body;
+
+//   if (!hospital || !session_date || !session_time) {
+//     return res.status(400).json({
+//       message: "Missing required fields",
+//     });
+//   }
+
+//   try {
+
+//     console.log("UPDATE SESSION API HIT");
+//     // 1. Get OLD booking session
+//     const [oldBooking] = await pool.query(
+//       `SELECT * FROM bookingForm WHERE id = ?`,
+//       [id]
+//     );
+
+//     if (oldBooking.length === 0) {
+//       return res.status(404).json({
+//         message: "Booking session not found",
+//       });
+//     }
+
+//     const old = oldBooking[0];
+
+//     // 2. Check overlapping sessions
+//     const [existing] = await pool.query(
+//       `SELECT session_time
+//        FROM bookingForm
+//        WHERE doctor_id = ?
+//        AND hospital = ?
+//        AND session_date = ?
+//        AND id != ?`,
+//       [old.doctor_id, hospital, session_date, id]
+//     );
+
+//     const [hNew, mNew] = session_time.split(":").map(Number);
+//     const newMinutes = hNew * 60 + mNew;
+
+//     for (const row of existing) {
+//       const [hDb, mDb] = row.session_time.split(":").map(Number);
+//       const dbMinutes = hDb * 60 + mDb;
+
+//       if (Math.abs(newMinutes - dbMinutes) < 120) {
+//         return res.status(400).json({
+//           message:
+//             "This session overlaps with another session. Sessions must be at least 2 hours apart.",
+//         });
+//       }
+//     }
+
+//     // 3. Update bookingForm
+//     await pool.query(
+//       `UPDATE bookingForm
+//        SET hospital = ?, session_date = ?, session_time = ?
+//        WHERE id = ?`,
+//       [hospital, session_date, session_time, id]
+//     );
+
+//     // 4. Get all booked patients using OLD session details
+//     const [patients] = await pool.query(
+//       `SELECT *
+//        FROM appointments
+//        WHERE bookingform_id = ?
+//        AND status != 'cancelled'`,
+//       [id]
+//     );
+
+//     console.log("Patients found:", patients.length);
+
+//     // 5. Update appointments table
+//     await pool.query(
+//       `UPDATE appointments
+//        SET hospital = ?,
+//            session_date = ?,
+//            session_time = ?
+//        WHERE bookingform_id = ?
+//        AND status != 'cancelled'`,
+//       [hospital, session_date, session_time, id]
+//     );
+
+//     // 6. Send email to every patient
+//     for (const patient of patients) {
+//       await sendAppointmentUpdateEmail({
+//         patientName: patient.patient_name,
+//         email: patient.email,
+//         doctorName: patient.doctor_name,
+//         hospital,
+//         sessionDate: session_date,
+//         sessionTime: session_time,
+//       });
+
+//       console.log("Email sent to:", patient.email);
+//     }
+
+//     res.json({
+//       message: `Booking updated successfully. ${patients.length} patients notified.`,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({
+//       message: "Server Error",
+//     }
+//   );
+//   }
+// };
+
+
 exports.updateAppointment = async (req, res) => {
   const { id } = req.params;
   const { hospital, session_date, session_time } = req.body;
@@ -279,10 +448,25 @@ exports.updateAppointment = async (req, res) => {
     const old = oldSession[0];
 
     // 2. update session
+    // await pool.query(
+    //   "UPDATE bookingform SET hospital=?, session_date=?, session_time=? WHERE id=?",
+    //   [hospital, session_date, session_time, id]
+    // );
+
     await pool.query(
-      "UPDATE bookingform SET hospital=?, session_date=?, session_time=? WHERE id=?",
-      [hospital, session_date, session_time, id]
-    );
+  `UPDATE appointments
+   SET hospital = ?,
+       session_date = ?,
+       session_time = ?
+   WHERE bookingform_id = ?
+   AND status != 'cancelled'`,
+  [
+    hospital,
+    session_date,
+    session_time,
+    id
+  ]
+);
 
     // 3. get patients
     const [patients] = await pool.query(
@@ -318,6 +502,7 @@ exports.updateAppointment = async (req, res) => {
     res.status(500).json({ message: "Error" });
   }
 };
+
 
 // exports.updateAppointment = async (req, res) => {
 //   const { id } = req.params;

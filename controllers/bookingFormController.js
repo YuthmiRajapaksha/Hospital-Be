@@ -460,6 +460,9 @@
 
 
 const db = require("../config/db");
+const emailService = require("../utils/emailService");
+const { sendDoctorArrivedEmail,sendAppointmentUpdateEmail, } = require("../utils/emailService");
+
 
 // ✅ Save multiple sessions with max_appointments
 exports.saveMultipleSessions = async (req, res) => {
@@ -746,59 +749,215 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 
 
 // ✅ Update a session
+// exports.updateAppointment = async (req, res) => {
+//   const { id } = req.params;
+//   const { hospital, session_date, session_time } = req.body;
+
+//   if (!hospital || !session_date || !session_time) {
+//     return res.status(400).json({ message: "Missing fields: hospital, session_date, and session_time are required" });
+//   }
+
+//   try {
+//     const [bookingForm] = await db.query(
+//       'SELECT doctor_id FROM bookingForm WHERE id = ?',
+//       [id]
+//     );
+
+//     if (bookingForm.length === 0) {
+//       return res.status(404).json({ message: "BookingForm not found" });
+//     }
+
+//     const doctorId = bookingForm[0].doctor_id;
+
+//     // Check for overlaps
+//     const [existing] = await db.query(
+//       `SELECT session_time FROM bookingForm 
+//        WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND id != ?`,
+//       [doctorId, hospital, session_date, id]
+//     );
+
+//     const [hNew, mNew] = session_time.split(":").map(Number);
+//     const newMins = hNew * 60 + mNew;
+
+//     for (const row of existing) {
+//       const [hDb, mDb] = row.session_time.split(":").map(Number);
+//       const dbMins = hDb * 60 + mDb;
+//       if (Math.abs(newMins - dbMins) < 120) {
+//         return res.status(400).json({
+//           message: `This session overlaps with an existing one for this doctor. Must be at least 2 hours apart.`,
+//         });
+//       }
+//     }
+
+//     const [result] = await db.query(
+//       'UPDATE bookingForm SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?',
+//       [hospital, session_date, session_time, id]
+//     );
+
+//     if (result.affectedRows === 0) {
+//       return res.status(404).json({ message: "BookingForm not found" });
+//     }
+
+//     res.json({ message: "BookingForm updated successfully" });
+//   } catch (err) {
+//     console.error("Error updating bookingForm:", err);
+//     res.status(500).json({ message: "Error updating bookingForm" });
+//   }
+// };
+
+
 exports.updateAppointment = async (req, res) => {
   const { id } = req.params;
   const { hospital, session_date, session_time } = req.body;
 
   if (!hospital || !session_date || !session_time) {
-    return res.status(400).json({ message: "Missing fields: hospital, session_date, and session_time are required" });
+    return res.status(400).json({
+      message: "Missing fields"
+    });
   }
 
   try {
+
+    // Get doctor id
     const [bookingForm] = await db.query(
       'SELECT doctor_id FROM bookingForm WHERE id = ?',
       [id]
     );
 
     if (bookingForm.length === 0) {
-      return res.status(404).json({ message: "BookingForm not found" });
+      return res.status(404).json({
+        message: "BookingForm not found"
+      });
     }
+
 
     const doctorId = bookingForm[0].doctor_id;
 
-    // Check for overlaps
+
+    // Check overlapping sessions
     const [existing] = await db.query(
-      `SELECT session_time FROM bookingForm 
-       WHERE doctor_id = ? AND hospital = ? AND session_date = ? AND id != ?`,
-      [doctorId, hospital, session_date, id]
+      `SELECT session_time 
+       FROM bookingForm
+       WHERE doctor_id = ?
+       AND hospital = ?
+       AND session_date = ?
+       AND id != ?`,
+      [
+        doctorId,
+        hospital,
+        session_date,
+        id
+      ]
     );
+
 
     const [hNew, mNew] = session_time.split(":").map(Number);
     const newMins = hNew * 60 + mNew;
 
+
     for (const row of existing) {
+
       const [hDb, mDb] = row.session_time.split(":").map(Number);
       const dbMins = hDb * 60 + mDb;
-      if (Math.abs(newMins - dbMins) < 120) {
+
+      if(Math.abs(newMins-dbMins)<120){
+
         return res.status(400).json({
-          message: `This session overlaps with an existing one for this doctor. Must be at least 2 hours apart.`,
+          message:"Session overlaps"
         });
+
       }
     }
 
-    const [result] = await db.query(
-      'UPDATE bookingForm SET hospital = ?, session_date = ?, session_time = ? WHERE id = ?',
-      [hospital, session_date, session_time, id]
+
+
+    // Update bookingForm
+    await db.query(
+      `UPDATE bookingForm
+       SET hospital=?,
+           session_date=?,
+           session_time=?
+       WHERE id=?`,
+      [
+        hospital,
+        session_date,
+        session_time,
+        id
+      ]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "BookingForm not found" });
+
+
+    // Get patients
+    const [patients] = await db.query(
+      `SELECT *
+       FROM appointments
+       WHERE bookingform_id = ?
+       AND status != 'cancelled'`,
+       [id]
+    );
+
+
+    console.log("Patients found:", patients.length);
+
+
+
+    // Update appointments
+    await db.query(
+      `UPDATE appointments
+       SET hospital=?,
+           session_date=?,
+           session_time=?
+       WHERE bookingform_id=?
+       AND status!='cancelled'`,
+       [
+        hospital,
+        session_date,
+        session_time,
+        id
+       ]
+    );
+
+
+
+    // Send emails
+    for(const patient of patients){
+
+      console.log("Sending email:", patient.email);
+
+
+      await sendAppointmentUpdateEmail({
+
+        patientName: patient.patient_name,
+        email: patient.email,
+        doctorName: patient.doctor_name,
+        hospital,
+        sessionDate: session_date,
+        sessionTime: session_time
+
+      });
+
+
+      console.log("Email sent:", patient.email);
+
     }
 
-    res.json({ message: "BookingForm updated successfully" });
-  } catch (err) {
-    console.error("Error updating bookingForm:", err);
-    res.status(500).json({ message: "Error updating bookingForm" });
+
+
+    res.json({
+      message:`Booking updated. ${patients.length} patients notified`
+    });
+
+
+
+  } catch(err){
+
+    console.error(err);
+
+    res.status(500).json({
+      message:"Server error"
+    });
+
   }
 };
 
